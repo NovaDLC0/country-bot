@@ -1,0 +1,459 @@
+{
+  "1": {
+    "name": "Эквадор",
+    "emoji": "🇪🇨",
+    "ownerId": null,
+    "status": "free"
+  },
+  "2": {
+    "name": "Афганистан",
+    "emoji": "🇦🇫",
+    "ownerId": null,
+    "status": "free"
+  },
+  "3": {
+    "name": "Ирак",
+    "emoji": "🇮🇶",
+    "ownerId": null,
+    "status": "free"
+  },
+  "4": {
+    "name": "Йемен",
+    "emoji": "🇾🇪",
+    "ownerId": null,
+    "status": "free"
+  },
+  "5": {
+    "name": "Эфиопия",
+    "emoji": "🇪🇹",
+    "ownerId": null,
+    "status": "free"
+  },
+  "6": {
+    "name": "Либерия",
+    "emoji": "🇱🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "7": {
+    "name": "Непал",
+    "emoji": "🇳🇵",
+    "ownerId": null,
+    "status": "free"
+  },
+  "8": {
+    "name": "Оман",
+    "emoji": "🇴🇲",
+    "ownerId": null,
+    "status": "free"
+  },
+  "9": {
+    "name": "Ньюфаундленд",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "10": {
+    "name": "Монголия",
+    "emoji": "🇲🇳",
+    "ownerId": null,
+    "status": "free"
+  },
+  "11": {
+    "name": "Тыва",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "12": {
+    "name": "Сан-Марино",
+    "emoji": "🇸🇲",
+    "ownerId": null,
+    "status": "free"
+  },
+  "13": {
+    "name": "Андорра",
+    "emoji": "🇦🇩",
+    "ownerId": null,
+    "status": "free"
+  },
+  "14": {
+    "name": "Ватикан",
+    "emoji": "🇻🇦",
+    "ownerId": null,
+    "status": "free"
+  },
+  "15": {
+    "name": "Тибет",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "16": {
+    "name": "Синьцзянское султанат",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "17": {
+    "name": "Латвия",
+    "emoji": "🇱🇻",
+    "ownerId": null,
+    "status": "free"
+  },
+  "18": {
+    "name": "Литва",
+    "emoji": "🇱🇹",
+    "ownerId": null,
+    "status": "free"
+  },
+  "19": {
+    "name": "Эстония",
+    "emoji": "🇪🇪",
+    "ownerId": "1195596012849483808",
+    "status": "free",
+    "ownerTag": "gort1s"
+  },
+  "20": {
+    "name": "Персия",
+    "emoji": "🇮🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "21": {
+    "name": "Сиам",
+    "emoji": "🇹🇭",
+    "ownerId": null,
+    "status": "free"
+  },
+  "22": {
+    "name": "Египет",
+    "emoji": "🇪🇬",
+    "ownerId": null,
+    "status": "free"
+  },
+  "23": {
+    "name": "Гватемала",
+    "emoji": "🇬🇹",
+    "ownerId": null,
+    "status": "free"
+  },
+  "24": {
+    "name": "Гондурас",
+    "emoji": "🇭🇳",
+    "ownerId": null,
+    "status": "free"
+  },
+  "25": {
+    "name": "Коста-Рика",
+    "emoji": "🇨🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "26": {
+    "name": "Панама",
+    "emoji": "🇵🇦",
+    "ownerId": null,
+    "status": "free"
+  },
+  "27": {
+    "name": "Никарагуа",
+    "emoji": "🇳🇮",
+    "ownerId": null,
+    "status": "free"
+  },
+  "28": {
+    "name": "Сальвадор",
+    "emoji": "🇸🇻",
+    "ownerId": null,
+    "status": "free"
+  },
+  "29": {
+    "name": "Доминиканская Республика",
+    "emoji": "🇩🇴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "30": {
+    "name": "Гаити",
+    "emoji": "🇭🇹",
+    "ownerId": null,
+    "status": "free"
+  },
+  "31": {
+    "name": "Перу",
+    "emoji": "🇵🇪",
+    "ownerId": null,
+    "status": "free"
+  },
+  "32": {
+    "name": "Уругвай",
+    "emoji": "🇺🇾",
+    "ownerId": null,
+    "status": "free"
+  },
+  "33": {
+    "name": "Болгария",
+    "emoji": "🇧🇬",
+    "ownerId": null,
+    "status": "free"
+  },
+  "34": {
+    "name": "Куба",
+    "emoji": "🇨🇺",
+    "ownerId": null,
+    "status": "free"
+  },
+  "35": {
+    "name": "Португалия",
+    "emoji": "🇵🇹",
+    "ownerId": null,
+    "status": "free"
+  },
+  "36": {
+    "name": "Ирландия",
+    "emoji": "🇮🇪",
+    "ownerId": null,
+    "status": "free"
+  },
+  "37": {
+    "name": "Турция",
+    "emoji": "🇹🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "38": {
+    "name": "Нанкинская республика",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "39": {
+    "name": "Маньчжурия",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "40": {
+    "name": "Шаньсийское государство",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "41": {
+    "name": "Китайская Советская Республика",
+    "emoji": "🇨🇳",
+    "ownerId": null,
+    "status": "free"
+  },
+  "42": {
+    "name": "Республика Гуанси",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "43": {
+    "name": "Сычуаньский конгломерат",
+    "emoji": "🏴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "44": {
+    "name": "Люксембург",
+    "emoji": "🇱🇺",
+    "ownerId": null,
+    "status": "free"
+  },
+  "45": {
+    "name": "Югославия",
+    "emoji": "🇷🇸",
+    "ownerId": null,
+    "status": "free"
+  },
+  "46": {
+    "name": "Испания",
+    "emoji": "🇪🇸",
+    "ownerId": null,
+    "status": "free"
+  },
+  "47": {
+    "name": "Бразилия",
+    "emoji": "🇧🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "48": {
+    "name": "Мексика",
+    "emoji": "🇲🇽",
+    "ownerId": null,
+    "status": "free"
+  },
+  "49": {
+    "name": "Южно-Африканский Союз",
+    "emoji": "🇿🇦",
+    "ownerId": null,
+    "status": "free"
+  },
+  "50": {
+    "name": "Новая Зеландия",
+    "emoji": "🇳🇿",
+    "ownerId": null,
+    "status": "free"
+  },
+  "51": {
+    "name": "Венгрия",
+    "emoji": "🇭🇺",
+    "ownerId": null,
+    "status": "free"
+  },
+  "52": {
+    "name": "Австрия",
+    "emoji": "🇦🇹",
+    "ownerId": null,
+    "status": "free"
+  },
+  "53": {
+    "name": "Норвегия",
+    "emoji": "🇳🇴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "54": {
+    "name": "Дания",
+    "emoji": "🇩🇰",
+    "ownerId": null,
+    "status": "free"
+  },
+  "55": {
+    "name": "Финляндия",
+    "emoji": "🇫🇮",
+    "ownerId": null,
+    "status": "free"
+  },
+  "56": {
+    "name": "Чили",
+    "emoji": "🇨🇱",
+    "ownerId": null,
+    "status": "free"
+  },
+  "57": {
+    "name": "Греция",
+    "emoji": "🇬🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "58": {
+    "name": "Венесуэла",
+    "emoji": "🇻🇪",
+    "ownerId": null,
+    "status": "free"
+  },
+  "59": {
+    "name": "Колумбия",
+    "emoji": "🇨🇴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "60": {
+    "name": "США",
+    "emoji": "🇺🇸",
+    "ownerId": null,
+    "status": "free"
+  },
+  "61": {
+    "name": "Великобритания",
+    "emoji": "🇬🇧",
+    "ownerId": null,
+    "status": "free"
+  },
+  "62": {
+    "name": "Веймарская Республика",
+    "emoji": "🇩🇪",
+    "ownerId": null,
+    "status": "free"
+  },
+  "63": {
+    "name": "СССР",
+    "emoji": "🇷🇺",
+    "ownerId": null,
+    "status": "free"
+  },
+  "64": {
+    "name": "Франция",
+    "emoji": "🇫🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "65": {
+    "name": "Япония",
+    "emoji": "🇯🇵",
+    "ownerId": null,
+    "status": "free"
+  },
+  "66": {
+    "name": "Италия",
+    "emoji": "🇮🇹",
+    "ownerId": null,
+    "status": "free"
+  },
+  "67": {
+    "name": "Канада",
+    "emoji": "🇨🇦",
+    "ownerId": null,
+    "status": "free"
+  },
+  "68": {
+    "name": "Чехословакия",
+    "emoji": "🇨🇿",
+    "ownerId": null,
+    "status": "free"
+  },
+  "69": {
+    "name": "Аргентина",
+    "emoji": "🇦🇷",
+    "ownerId": null,
+    "status": "free"
+  },
+  "70": {
+    "name": "Польша",
+    "emoji": "🇵🇱",
+    "ownerId": null,
+    "status": "free"
+  },
+  "71": {
+    "name": "Нидерланды",
+    "emoji": "🇳🇱",
+    "ownerId": null,
+    "status": "free"
+  },
+  "72": {
+    "name": "Бельгия",
+    "emoji": "🇧🇪",
+    "ownerId": null,
+    "status": "free"
+  },
+  "73": {
+    "name": "Швеция",
+    "emoji": "🇸🇪",
+    "ownerId": null,
+    "status": "free"
+  },
+  "74": {
+    "name": "Швейцария",
+    "emoji": "🇨🇭",
+    "ownerId": null,
+    "status": "free"
+  },
+  "75": {
+    "name": "Румыния",
+    "emoji": "🇷🇴",
+    "ownerId": null,
+    "status": "free"
+  },
+  "76": {
+    "name": "Австралия",
+    "emoji": "🇦🇺",
+    "ownerId": null,
+    "status": "free"
+  }
+}
