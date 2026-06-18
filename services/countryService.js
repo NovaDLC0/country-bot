@@ -2,14 +2,18 @@ const { readDB, saveDB } = require("./dbService");
 
 // 📌 выдать страну
 function assignCountry(country, user) {
+
     const db = readDB();
 
-    // ❌ страна занята
+    db.users = db.users || {};
+    db.countries = db.countries || {};
+
+    // страна занята
     if (db.countries[country]) {
         return { error: "Страна уже занята" };
     }
 
-    // ❌ у юзера уже есть страна
+    // у пользователя уже есть страна
     if (db.users[user.id]) {
         return { error: "У тебя уже есть страна" };
     }
@@ -19,17 +23,26 @@ function assignCountry(country, user) {
 
     saveDB(db);
 
-    return { success: true, country };
+    return {
+        success: true,
+        country
+    };
 }
 
 // 📌 снять страну
 function removeCountry(userId) {
+
     const db = readDB();
+
+    db.users = db.users || {};
+    db.countries = db.countries || {};
 
     const country = db.users[userId];
 
     if (!country) {
-        return { error: "У игрока нет страны" };
+        return {
+            error: "У игрока нет страны"
+        };
     }
 
     delete db.users[userId];
@@ -37,18 +50,29 @@ function removeCountry(userId) {
 
     saveDB(db);
 
-    return { success: true, country };
+    return {
+        success: true,
+        country
+    };
 }
 
-// 📌 проверить занята ли страна
+// 📌 страна занята?
 function isTaken(country) {
+
     const db = readDB();
+
+    db.countries = db.countries || {};
+
     return !!db.countries[country];
 }
 
-// 📌 получить страну пользователя
+// 📌 страна игрока
 function getUserCountry(userId) {
+
     const db = readDB();
+
+    db.users = db.users || {};
+
     return db.users[userId] || null;
 }
 

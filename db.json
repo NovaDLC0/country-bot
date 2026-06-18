@@ -1,3 +1,26 @@
 {
-  "users": {}
+  "users": {},
+  "applications": {
+    "1195596012849483808": {
+      "userId": "1195596012849483808",
+      "tag": "gort1s",
+      "country": "Эстония",
+      "rules": ".",
+      "vpi": ".",
+      "age": ".",
+      "status": "pending",
+      "handledBy": null,
+      "createdAt": 1781792589020
+    }
+  },
+  "countries": {},
+  "logs": [],
+  "settings": {
+    "cooldown": 30000
+  }
+}
+
+"settings": {
+  "cooldown": 30000,
+  "requestsChannel": null
 }

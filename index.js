@@ -1,4 +1,11 @@
-const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
+const {
+    Client,
+    GatewayIntentBits,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
+} = require("discord.js");
 
 const { buildCountriesPanel } = require("./panels/countriesPanel");
 const handleButtons = require("./handlers/buttonsHandler");
@@ -7,6 +14,14 @@ const { getConfig, saveConfig } = require("./services/configService");
 const { assignCountry } = require("./services/countryService");
 const { readDB, saveDB } = require("./services/dbService");
 
+// =========================
+// VERSION
+// =========================
+const BOT_VERSION = "0.1.6";
+
+// =========================
+// CLIENT
+// =========================
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -18,130 +33,119 @@ const client = new Client({
 });
 
 // =========================
-// 🤖 READY
+// READY
 // =========================
 client.once("ready", () => {
-    client.user.setActivity("🌍 WORLD WIDE", { type: "Watching" });
+
+    client.user.setActivity(`🌍 WORLD WIDE v${BOT_VERSION}`, { type: "Watching" });
 
     client.user.setPresence({
         status: "online",
         activities: [{
-            name: "Люблю WORLD WIDE ❤️",
+            name: `WORLD WIDE ${BOT_VERSION}`,
             type: 4
         }]
     });
 
     console.log(`
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━
 🤖 BOT ONLINE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 VERSION: ${BOT_VERSION}
 👤 ${client.user.tag}
-🆔 ${client.user.id}
-🌍 Servers: ${client.guilds.cache.size}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`);
+━━━━━━━━━━━━━━━━━━━━━━
+    `);
 });
 
 // =========================
-// 💬 MESSAGE COMMANDS
+// MESSAGE COMMANDS
 // =========================
 client.on("messageCreate", async (message) => {
 
     if (message.author.bot) return;
 
+    const db = readDB();
+
     // =========================
-    // 🌍 PANEL
+    // PANEL
     // =========================
     if (message.content === "!panel") {
-
-        const panel = buildCountriesPanel();
-
-        return message.channel.send({
-            ...panel
-        });
+        return message.channel.send(buildCountriesPanel());
     }
 
     // =========================
-    // 🌍 COUNTRIES LIST
+    // COUNTRIES
     // =========================
     if (message.content === "!countries") {
-
-        const db = readDB();
 
         const list = Object.entries(db.countries || {})
             .map(([country, userId]) => `🌍 **${country}** → <@${userId}>`)
             .join("\n") || "Пусто";
 
         const embed = new EmbedBuilder()
-            .setTitle("🌍 Страны")
-            .setDescription(list)
-            .setColor("Blue");
+            .setTitle(`🌍 Занятые страны v${BOT_VERSION}`)
+            .setColor(0x3498db)
+            .setDescription(list);
 
         return message.channel.send({ embeds: [embed] });
     }
 
-    // =========================
-    // 📰 NEWS
-    // =========================
-    if (message.content.startsWith("!news ")) {
+if (message.content === "!admin") {
 
-        const NEWS_CHANNEL_ID = "1163909514374955018";
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId("admin_panel")
+            .setLabel("🛠 Админ панель")
+            .setStyle(ButtonStyle.Danger)
+    );
 
-        if (message.channel.id !== NEWS_CHANNEL_ID) {
-            return message.reply("❌ Только в канале новостей.");
-        }
+    return message.channel.send({
+        content: "Админ панель:",
+        components: [row]
+    });
+}
 
-        if (!message.member.permissions.has("Administrator")) {
-            return message.reply("❌ Нет прав.");
-        }
+if (message.content === "!ping") {
 
-        const text = message.content.slice(6);
+    const sent = await message.reply("🏓 Проверяю пинг...");
 
-        const embed = new EmbedBuilder()
-            .setTitle("📰 Новости")
-            .setDescription(text)
-            .setColor("Gold")
-            .setFooter({ text: message.author.tag })
-            .setTimestamp();
+    const ping = sent.createdTimestamp - message.createdTimestamp;
 
-        return message.channel.send({ embeds: [embed] });
-    }
+    return sent.edit(`🏓 Pong!\n📶 Ping: ${ping}ms\n🤖 API: ${message.client.ws.ping}ms`);
+}
 
     // =========================
-    // 📌 SET REQUEST CHANNEL
+    // SET REQUESTS
     // =========================
     if (message.content.startsWith("!setrequests")) {
 
         if (!message.member.permissions.has("Administrator")) {
-            return message.reply("❌ Нет прав.");
+            return message.reply("❌ Нет прав");
         }
 
         const channel = message.mentions.channels.first();
-        if (!channel) {
-            return message.reply("Использование: !setrequests #канал");
-        }
+        if (!channel) return message.reply("!setrequests #channel");
 
         const config = getConfig();
         config.requestsChannel = channel.id;
         saveConfig(config);
 
-        return message.reply(`✅ Канал установлен: ${channel}`);
+        return message.reply(`✅ Канал заявок установлен`);
     }
 
     // =========================
-    // 🌍 SET COUNTRY (ADMIN)
+    // SET COUNTRY
     // =========================
     if (message.content.startsWith("!setcountry")) {
 
         if (!message.member.permissions.has("Administrator")) {
-            return message.reply("❌ Нет прав.");
+            return message.reply("❌ Нет прав");
         }
 
         const user = message.mentions.users.first();
         const country = message.content.split(" ").slice(2).join(" ");
 
         if (!user || !country) {
-            return message.reply("Использование: !setcountry @user Страна");
+            return message.reply("!setcountry @user страна");
         }
 
         const result = assignCountry(country, {
@@ -153,43 +157,71 @@ client.on("messageCreate", async (message) => {
             return message.reply(`❌ ${result.error}`);
         }
 
-        return message.reply(`🌍 Выдано: **${country}** → ${user.tag}`);
+        return message.reply(`🌍 ${country} → ${user.tag}`);
     }
 
     // =========================
-    // ❌ REMOVE COUNTRY
+    // REMOVE COUNTRY (FIXED)
     // =========================
     if (message.content.startsWith("!removecountry")) {
 
         if (!message.member.permissions.has("Administrator")) {
-            return message.reply("❌ Нет прав.");
+            return message.reply("❌ Нет прав");
         }
 
         const user = message.mentions.users.first();
+        if (!user) return message.reply("!removecountry @user");
 
-        if (!user) {
-            return message.reply("Использование: !removecountry @user");
+        db.countries = db.countries || {};
+
+        let removed = null;
+
+        for (const country in db.countries) {
+            if (db.countries[country] === user.id) {
+                removed = country;
+                delete db.countries[country];
+                break;
+            }
         }
 
-        const db = readDB();
-
-        if (db.countries[user.id]) {
-            delete db.countries[user.id];
-            saveDB(db);
+        if (!removed) {
+            return message.reply("❌ У пользователя нет страны");
         }
 
-        return message.reply(`❌ Страна снята с ${user.tag}`);
+        saveDB(db);
+
+        return message.reply(`❌ Убрана страна **${removed}** у ${user.tag}`);
     }
 
     // =========================
-    // 🏓 PING
+    // NEWS
     // =========================
-    if (message.content === "!ping") {
-        return message.reply("🏓 Pong!");
+    if (message.content.startsWith("!news ")) {
+
+        const NEWS_CHANNEL_ID = "1163909514374955018";
+
+        if (message.channel.id !== NEWS_CHANNEL_ID) {
+            return message.reply("❌ Только новости");
+        }
+
+        if (!message.member.permissions.has("Administrator")) {
+            return message.reply("❌ Нет прав");
+        }
+
+        const text = message.content.slice(6);
+
+        const embed = new EmbedBuilder()
+            .setTitle("📰 Новости")
+            .setColor(0xf1c40f)
+            .setDescription(text)
+            .setFooter({ text: message.author.tag })
+            .setTimestamp();
+
+        return message.channel.send({ embeds: [embed] });
     }
 
     // =========================
-    // 📩 DM COMMAND
+    // DM COMMAND
     // =========================
     if (message.channel.type === 1) {
 
@@ -197,15 +229,13 @@ client.on("messageCreate", async (message) => {
 
             if (message.content.startsWith("!говори ")) {
 
-                const args = message.content.slice(9).split(" ");
-                const channelId = args[0].replace(/[<#>]/g, "");
-                const text = args.slice(1).join(" ");
+                const args = message.content.split(" ");
+                const channelId = args[1].replace(/[<#>]/g, "");
+                const text = args.slice(2).join(" ");
 
                 const channel = client.channels.cache.get(channelId);
 
-                if (!channel) {
-                    return message.reply("❌ Канал не найден");
-                }
+                if (!channel) return message.reply("❌ Канал не найден");
 
                 await channel.send(text);
                 return message.reply("✅ Отправлено");
@@ -215,17 +245,17 @@ client.on("messageCreate", async (message) => {
 });
 
 // =========================
-// 🎮 BUTTONS
+// BUTTONS
 // =========================
 client.on("interactionCreate", async (interaction) => {
     try {
         await handleButtons(interaction);
     } catch (err) {
-        console.log("Interaction error:", err);
+        console.log("BUTTON ERROR:", err);
     }
 });
 
 // =========================
-// 🔑 LOGIN
+// LOGIN
 // =========================
 client.login(process.env.TOKEN);

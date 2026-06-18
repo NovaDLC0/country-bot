@@ -1,21 +1,46 @@
 const fs = require("fs");
+const path = require("path");
 
-const DB_PATH = "./data/database.json";
+const DB_PATH = path.join(__dirname, "..", "data", "db.json");
 
+// =========================
+// READ DB
+// =========================
 function readDB() {
-    if (!fs.existsSync(DB_PATH)) {
-        fs.writeFileSync(DB_PATH, JSON.stringify({
-            countries: {},
-            warns: {},
-            accepted: {}
-        }, null, 2));
-    }
+    try {
+        const raw = fs.readFileSync(DB_PATH, "utf8");
 
-    return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
+        const db = JSON.parse(raw);
+
+        return {
+            applications: db.applications || {},
+            countries: db.countries || {},
+            settings: db.settings || {},
+            cooldowns: db.cooldowns || {}
+        };
+
+    } catch (e) {
+        return {
+            applications: {},
+            countries: {},
+            settings: {},
+            cooldowns: {}
+        };
+    }
 }
 
-function saveDB(data) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+// =========================
+// SAVE DB
+// =========================
+function saveDB(db) {
+    const safeDB = {
+        applications: db.applications || {},
+        countries: db.countries || {},
+        settings: db.settings || {},
+        cooldowns: db.cooldowns || {}
+    };
+
+    fs.writeFileSync(DB_PATH, JSON.stringify(safeDB, null, 2));
 }
 
 module.exports = { readDB, saveDB };

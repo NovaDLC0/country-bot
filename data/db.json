@@ -1,3 +1,19 @@
 {
-  "users": {}
+  "applications": {
+    "1195596012849483808": {
+      "userId": "1195596012849483808",
+      "tag": "gort1s",
+      "country": "Эстония",
+      "rules": ".",
+      "vpi": "..",
+      "age": "M",
+      "status": "rejected",
+      "reason": "У вас уже есть страна"
+    }
+  },
+  "countries": {
+    "СССР": "890886720114008064"
+  },
+  "settings": {},
+  "cooldowns": {}
 }
