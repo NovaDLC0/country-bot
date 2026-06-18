@@ -30,14 +30,14 @@ function saveDB(db) {
 }
 
 // =========================
-// MAIN HANDLER
+// MAIN
 // =========================
 module.exports = async (interaction) => {
 
     try {
 
         // =========================
-        // 📩 START PANEL
+        // 📩 PANEL START
         // =========================
         if (interaction.isButton() && interaction.customId === "start_country_flow") {
 
@@ -61,7 +61,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🌍 SELECT COUNTRY FLOW
+        // 🌍 REGION MENU
         // =========================
         if (interaction.isButton() && interaction.customId === "select_country") {
 
@@ -83,18 +83,23 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🌍 REGION SELECT
+        // 🌍 REGION → COUNTRIES (PAGINATION)
         // =========================
         if (interaction.isStringSelectMenu() && interaction.customId === "region_select") {
 
             const region = interaction.values[0];
             const countries = REGIONS[region] || [];
 
+            const page = 0;
+            const perPage = 25;
+
+            const chunk = countries.slice(0, perPage);
+
             const menu = new StringSelectMenuBuilder()
-                .setCustomId("country_select")
-                .setPlaceholder("🏳️ Выберите страну")
+                .setCustomId(`country_select_${region}_${page}`)
+                .setPlaceholder(`🏳️ ${region} (стр. 1)`)
                 .addOptions(
-                    countries.map(c => ({
+                    chunk.map(c => ({
                         label: c,
                         value: c,
                         emoji: "🏳️"
@@ -102,7 +107,7 @@ module.exports = async (interaction) => {
                 );
 
             return interaction.update({
-                content: "🏳️ Выберите страну:",
+                content: `🏳️ Выберите страну (${region})`,
                 components: [new ActionRowBuilder().addComponents(menu)]
             });
         }
@@ -110,7 +115,7 @@ module.exports = async (interaction) => {
         // =========================
         // 🏳️ COUNTRY → MODAL
         // =========================
-        if (interaction.isStringSelectMenu() && interaction.customId === "country_select") {
+        if (interaction.isStringSelectMenu() && interaction.customId.startsWith("country_select_")) {
 
             const country = interaction.values[0];
 
@@ -120,13 +125,13 @@ module.exports = async (interaction) => {
 
             const q1 = new TextInputBuilder()
                 .setCustomId("rules")
-                .setLabel("📜 Понимаете ли вы правила сервера?")
+                .setLabel("📜 Понимаете правила сервера?")
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true);
 
             const q2 = new TextInputBuilder()
                 .setCustomId("vpi")
-                .setLabel("🌍 Понимаете ли вы что такое ВПИ?")
+                .setLabel("🌍 Что такое ВПИ?")
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true);
 
@@ -214,7 +219,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🧠 MODERATION SYSTEM
+        // 🧠 MODERATION
         // =========================
         if (interaction.isButton() && (
             interaction.customId.startsWith("approve_") ||
@@ -233,13 +238,6 @@ module.exports = async (interaction) => {
                 });
             }
 
-            if (action !== "pending" && db.users[userId].status !== "pending") {
-                return interaction.reply({
-                    content: "❌ Уже обработано",
-                    ephemeral: true
-                });
-            }
-
             const member = await interaction.guild.members.fetch(userId).catch(() => null);
 
             let status = "";
@@ -247,14 +245,31 @@ module.exports = async (interaction) => {
             let dm = "";
 
             if (action === "approve") {
+
                 db.users[userId].status = "approved";
+                db.users[userId].updatedAt = Date.now();
+
                 status = "🟢 Одобрено";
                 color = "Green";
                 dm = "🟢 Ваша заявка одобрена";
+
+                // 🎯 РОЛЬ ГОСУДАРСТВО
+                if (member) {
+                    const role = interaction.guild.roles.cache.find(r =>
+                        r.name === "Государство"
+                    );
+
+                    if (role) {
+                        await member.roles.add(role).catch(() => {});
+                    }
+                }
             }
 
             if (action === "reject") {
+
                 db.users[userId].status = "rejected";
+                db.users[userId].updatedAt = Date.now();
+
                 status = "🔴 Отклонено";
                 color = "Red";
                 dm = "🔴 Ваша заявка отклонена";
@@ -265,7 +280,6 @@ module.exports = async (interaction) => {
                 color = "Yellow";
             }
 
-            db.users[userId].updatedAt = Date.now();
             saveDB(db);
 
             if (member && action !== "pending") {
@@ -274,10 +288,7 @@ module.exports = async (interaction) => {
 
             const embed = EmbedBuilder.from(interaction.message.embeds[0])
                 .setColor(color)
-                .addFields({
-                    name: "📌 Статус",
-                    value: status
-                });
+                .addFields({ name: "📌 Статус", value: status });
 
             await interaction.message.edit({
                 embeds: [embed],
