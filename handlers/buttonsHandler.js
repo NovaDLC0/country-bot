@@ -229,7 +229,7 @@ module.exports = async (interaction) => {
             const country = interaction.values[0];
 
             const modal = new ModalBuilder()
-                .setCustomId(`modal_${country}`)
+		.setCustomId(`modal_${country.replaceAll(" ", "_")}`)
                 .setTitle(`Заявка: ${country}`);
 
             const q1 = new TextInputBuilder()
@@ -266,9 +266,10 @@ module.exports = async (interaction) => {
 
             try {
 
-                const country = interaction.customId.replace("modal_", "");
+		const country = interaction.customId.replace("modal_", "").replaceAll("_", " ");
+                
 
-                const rules = interaction.fields.getTextInputValue("rules");
+		const rules = interaction.fields.getTextInputValue("rules");
                 const vpi = interaction.fields.getTextInputValue("vpi");
                 const age = interaction.fields.getTextInputValue("age");
 
