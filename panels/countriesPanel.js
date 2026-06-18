@@ -8,25 +8,27 @@ const {
 function buildCountriesPanel() {
 
     const embed = new EmbedBuilder()
-        .setTitle("🌍 Регистрация государств")
+        .setTitle("🌍 Система регистрации государств")
         .setDescription(
             [
-                "Добро пожаловать в систему регистрации государств.",
+                "Добро пожаловать!",
                 "",
-                "Нажмите кнопку ниже для подачи заявки.",
+                "Нажмите кнопку ниже чтобы начать:",
                 "",
-                "После одобрения заявки страна автоматически закрепится за вами."
+                "📌 Вы сможете:",
+                "🌍 выбрать страну",
+                "📝 заполнить анкету",
+                "📋 отправить заявку"
             ].join("\n")
         )
         .setColor("Blue");
 
-    const row = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId("apply_country")
-                .setLabel("📩 Подать заявку")
-                .setStyle(ButtonStyle.Primary)
-        );
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId("start_country_flow")
+            .setLabel("📩 Начать")
+            .setStyle(ButtonStyle.Primary)
+    );
 
     return {
         embeds: [embed],
@@ -34,6 +36,4 @@ function buildCountriesPanel() {
     };
 }
 
-module.exports = {
-    buildCountriesPanel
-};
+module.exports = { buildCountriesPanel };

@@ -1,269 +1,171 @@
 const {
     ActionRowBuilder,
-    StringSelectMenuBuilder,
-    EmbedBuilder,
     ButtonBuilder,
     ButtonStyle,
+    StringSelectMenuBuilder,
     ModalBuilder,
     TextInputBuilder,
-    TextInputStyle
+    TextInputStyle,
+    EmbedBuilder
 } = require("discord.js");
 
-const { getConfig } = require("../services/configService");
-const { assignCountry } = require("../services/countryService");
 const REGIONS = require("../data/regions");
+const { getConfig } = require("../services/configService");
 
-// 🧠 защита от повторной обработки
-const processedForms = new Set();
+// 🧠 анти-дубли (по желанию)
+const processed = new Set();
 
 module.exports = async (interaction) => {
 
-    // =========================
-    // 🌍 КНОПКА "ВЫБОР СТРАНЫ"
-    // =========================u
-    if (interaction.isButton() && interaction.customId === "apply_country") {
+    try {
 
-        const menu = new StringSelectMenuBuilder()
-            .setCustomId("region_select")
-            .setPlaceholder("🌍 Выберите регион")
-            .addOptions([
-                { label: "Европа", value: "europe", emoji: "🌍" },
-                { label: "Америка", value: "america", emoji: "🌎" },
-                { label: "Азия", value: "asia", emoji: "🌏" },
-                { label: "Особые", value: "special", emoji: "🏴" }
-            ]);
+        // =========================
+        // 📩 START PANEL → 2 BUTTONS
+        // =========================
+        if (interaction.isButton() && interaction.customId === "start_country_flow") {
 
-        return interaction.reply({
-            content: "🌍 Выберите регион:",
-            components: [new ActionRowBuilder().addComponents(menu)],
-            ephemeral: true
-        });
-    }
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId("select_country")
+                    .setLabel("🌍 Выбрать страну")
+                    .setStyle(ButtonStyle.Primary),
 
-    // =========================
-    // 🌍 ВЫБОР РЕГИОНА
-    // =========================
-    if (interaction.isStringSelectMenu() && interaction.customId === "region_select") {
-
-        const region = interaction.values[0];
-
-        const menu = new StringSelectMenuBuilder()
-            .setCustomId("country_select")
-            .setPlaceholder("🌍 Выберите страну")
-            .addOptions(
-                REGIONS[region].map(c => ({
-                    label: c,
-                    value: c
-                }))
+                new ButtonBuilder()
+                    .setCustomId("fill_form")
+                    .setLabel("📝 Заполнить анкету")
+                    .setStyle(ButtonStyle.Success)
             );
 
-        return interaction.update({
-            content: "🌍 Выберите страну:",
-            components: [new ActionRowBuilder().addComponents(menu)]
-        });
-    }
-
-    // =========================
-    // 🌍 ВЫБОР СТРАНЫ → ЗАЯВКА
-    // =========================
-    if (interaction.isStringSelectMenu() && interaction.customId === "country_select") {
-
-        const countryName = interaction.values[0];
-        const config = getConfig();
-
-        const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
-
-        const requestId = `${interaction.user.id}_${countryName}`;
-
-        const embed = new EmbedBuilder()
-            .setTitle("📋 Новая заявка")
-            .addFields(
-                { name: "👤 Игрок", value: interaction.user.tag, inline: true },
-                { name: "🌍 Страна", value: countryName, inline: true },
-                { name: "📌 Статус", value: "🟡 На рассмотрении" }
-            )
-            .setColor("Blue")
-            .setTimestamp();
-
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId(`pending_form_${interaction.user.id}`)
-                .setLabel("🟡 На рассмотрении")
-                .setStyle(ButtonStyle.Secondary),
-
-            new ButtonBuilder()
-                .setCustomId(`approve_form_${interaction.user.id}`)
-                .setLabel("🟢 Одобрить")
-                .setStyle(ButtonStyle.Success),
-
-            new ButtonBuilder()
-                .setCustomId(`reject_form_${interaction.user.id}`)
-                .setLabel("🔴 Отказать")
-                .setStyle(ButtonStyle.Danger)
-        );
-
-        if (channel) {
-            await channel.send({ embeds: [embed], components: [row] });
-        }
-
-        return interaction.update({
-            content: `📋 Заявка отправлена: ${countryName}`,
-            components: []
-        });
-    }
-
-    // =========================
-    // 📝 КНОПКА АНКЕТЫ → MODAL
-    // =========================
-    if (interaction.isButton() && interaction.customId === "start_form") {
-
-        const modal = new ModalBuilder()
-            .setCustomId("application_modal")
-            .setTitle("📝 Анкета");
-
-        const q1 = new TextInputBuilder()
-            .setCustomId("rules")
-            .setLabel("Ознакомлены с правилами?")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
-
-        const q2 = new TextInputBuilder()
-            .setCustomId("age")
-            .setLabel("Сколько вам полных лет?")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
-
-        const q3 = new TextInputBuilder()
-            .setCustomId("vpi")
-            .setLabel("Что такое ВПИ?")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
-
-        modal.addComponents(
-            new ActionRowBuilder().addComponents(q1),
-            new ActionRowBuilder().addComponents(q2),
-            new ActionRowBuilder().addComponents(q3)
-        );
-
-        return interaction.showModal(modal);
-    }
-
-    // =========================
-    // 📝 ОТПРАВКА АНКЕТЫ
-    // =========================
-    if (interaction.isModalSubmit() && interaction.customId === "application_modal") {
-
-        const rules = interaction.fields.getTextInputValue("rules");
-        const age = interaction.fields.getTextInputValue("age");
-        const vpi = interaction.fields.getTextInputValue("vpi");
-
-        const config = getConfig();
-        const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
-
-        const embed = new EmbedBuilder()
-            .setTitle("📝 Новая анкета")
-            .addFields(
-                { name: "📜 Правила", value: rules },
-                { name: "🎂 Возраст", value: age },
-                { name: "🌍 ВПИ", value: vpi },
-                { name: "👤 Пользователь", value: `<@${interaction.user.id}>` }
-            )
-            .setColor("Purple")
-            .setTimestamp();
-
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId(`pending_form_${interaction.user.id}`)
-                .setLabel("🟡 На рассмотрении")
-                .setStyle(ButtonStyle.Secondary),
-
-            new ButtonBuilder()
-                .setCustomId(`approve_form_${interaction.user.id}`)
-                .setLabel("🟢 Одобрить")
-                .setStyle(ButtonStyle.Success),
-
-            new ButtonBuilder()
-                .setCustomId(`reject_form_${interaction.user.id}`)
-                .setLabel("🔴 Отказать")
-                .setStyle(ButtonStyle.Danger)
-        );
-
-        if (channel) {
-            await channel.send({ embeds: [embed], components: [row] });
-        }
-
-        return interaction.reply({
-            content: "✅ Анкета отправлена",
-            ephemeral: true
-        });
-    }
-
-    // =========================
-    // 🧠 ОБРАБОТКА АНКЕТ (МОДЕРАТОРЫ)
-    // =========================
-    if (interaction.isButton() && interaction.customId.includes("_form_")) {
-
-        const parts = interaction.customId.split("_");
-        const action = parts[0];   // approve / reject / pending
-        const userId = parts[2];
-
-        const moderator = interaction.user;
-
-        if (processedForms.has(userId)) {
             return interaction.reply({
-                content: "❌ Уже обработано",
+                content: "Выберите действие:",
+                components: [row],
                 ephemeral: true
             });
         }
 
-        const member = await interaction.guild.members.fetch(userId).catch(() => null);
+        // =========================
+        // 🌍 COUNTRY FLOW START → REGION SELECT
+        // =========================
+        if (interaction.isButton() && interaction.customId === "select_country") {
 
-        // 🟡 просмотр
-        if (action === "pending") {
+            const menu = new StringSelectMenuBuilder()
+                .setCustomId("region_select")
+                .setPlaceholder("🌍 Выберите регион")
+                .addOptions([
+                    { label: "Европа", value: "europe", emoji: "🇪🇺" },
+                    { label: "Америка", value: "america", emoji: "🌎" },
+                    { label: "Азия", value: "asia", emoji: "🌏" },
+                    { label: "Особые", value: "special", emoji: "🏴" }
+                ]);
+
             return interaction.reply({
-                content: `🟡 Взято в рассмотрение\n👑 Модератор: ${moderator.tag}`,
+                content: "🌍 Выберите регион:",
+                components: [new ActionRowBuilder().addComponents(menu)],
                 ephemeral: true
             });
         }
 
-        // 🟢 одобрение
-        if (action === "approve") {
+        // =========================
+        // 🌍 REGION → COUNTRY SELECT
+        // =========================
+        if (interaction.isStringSelectMenu() && interaction.customId === "region_select") {
 
-            processedForms.add(userId);
+            const region = interaction.values[0];
+            const countries = REGIONS[region] || [];
 
-            if (member) {
-                await member.send(`🟢 Анкета одобрена\n👑 Модератор: ${moderator.tag}`).catch(() => {});
+            const menu = new StringSelectMenuBuilder()
+                .setCustomId("country_select")
+                .setPlaceholder("🏳️ Выберите страну")
+                .addOptions(
+                    countries.map(c => ({
+                        label: c,
+                        value: c,
+                        emoji: "🏳️"
+                    }))
+                );
+
+            return interaction.update({
+                content: "🏳️ Выберите страну:",
+                components: [new ActionRowBuilder().addComponents(menu)]
+            });
+        }
+
+        // =========================
+        // 🏳️ COUNTRY → MODAL
+        // =========================
+        if (interaction.isStringSelectMenu() && interaction.customId === "country_select") {
+
+            const country = interaction.values[0];
+
+            const modal = new ModalBuilder()
+                .setCustomId(`application_modal_${country}`)
+                .setTitle(`📝 Заявка: ${country}`);
+
+            const q1 = new TextInputBuilder()
+                .setCustomId("rules")
+                .setLabel("📜 Понимаете ли вы правила сервера?")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+
+            const q2 = new TextInputBuilder()
+                .setCustomId("vpi")
+                .setLabel("🌍 Понимаете ли вы что такое ВПИ?")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+
+            const q3 = new TextInputBuilder()
+                .setCustomId("age")
+                .setLabel("🎂 Сколько вам лет?")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(q1),
+                new ActionRowBuilder().addComponents(q2),
+                new ActionRowBuilder().addComponents(q3)
+            );
+
+            return interaction.showModal(modal);
+        }
+
+        // =========================
+        // 📝 MODAL SUBMIT
+        // =========================
+        if (interaction.isModalSubmit() && interaction.customId.startsWith("application_modal_")) {
+
+            const country = interaction.customId.replace("application_modal_", "");
+
+            const rules = interaction.fields.getTextInputValue("rules");
+            const vpi = interaction.fields.getTextInputValue("vpi");
+            const age = interaction.fields.getTextInputValue("age");
+
+            const config = getConfig();
+            const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
+
+            const embed = new EmbedBuilder()
+                .setTitle("📝 Новая заявка")
+                .setColor("Purple")
+                .addFields(
+                    { name: "👤 Игрок", value: interaction.user.tag, inline: true },
+                    { name: "🏳️ Страна", value: country, inline: true },
+                    { name: "📜 Знание правил", value: rules },
+                    { name: "🌍 Ознакомлен с  ВПИ", value: vpi, inline: true },
+                    { name: "🎂 Возраст", value: age, inline: true },
+                    { name: "📌 Статус", value: "🟡 На рассмотрении" }
+                )
+                .setTimestamp();
+
+            if (channel) {
+                await channel.send({ embeds: [embed] });
             }
 
-            await interaction.message.edit({
-                components: [],
-                embeds: interaction.message.embeds
-            }).catch(() => {});
-
             return interaction.reply({
-                content: `🟢 Одобрено\n👑 Модератор: ${moderator.tag}`,
+                content: "✅ Заявка отправлена",
                 ephemeral: true
             });
         }
 
-        // 🔴 отказ
-        if (action === "reject") {
-
-            processedForms.add(userId);
-
-            if (member) {
-                await member.send(`🔴 Анкета отклонена\n👑 Модератор: ${moderator.tag}`).catch(() => {});
-            }
-
-            await interaction.message.edit({
-                components: [],
-                embeds: interaction.message.embeds
-            }).catch(() => {});
-
-            return interaction.reply({
-                content: `🔴 Отклонено\n👑 Модератор: ${moderator.tag}`,
-                ephemeral: true
-            });
-        }
+    } catch (err) {
+        console.error("BUTTON HANDLER ERROR:", err);
     }
 };
