@@ -1,8 +1,8 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 
 const { buildCountriesPanel } = require("./panels/countriesPanel");
-const handleButtons = require("./handlers/buttonsHandler");
 
+const handleButtons = require("./handlers/buttonsHandler");
 const { getConfig, saveConfig } = require("./services/configService");
 const { readDB } = require("./services/dbService");
 
@@ -93,9 +93,9 @@ client.on("messageCreate", async (message) => {
 
         const db = readDB();
 
-        const list = Object.entries(db.countries || {})
-            .map(([country, userId]) => `🌍 **${country}** — <@${userId}>`)
-            .join("\n") || "Пусто";
+	const list = Object.entries(db.countries || {})
+    .map(([country, userId]) => `🌍 **${country}** — <@${userId}>`)
+    .join("\n") || "Пусто";
 
         const embed = new EmbedBuilder()
             .setTitle("🌍 Занятые страны")

@@ -96,7 +96,7 @@ module.exports = async (interaction) => {
     }
 }
 
-|   // =========================
+    // =========================
     // 📩 КНОПКА ПОДАТЬ ЗАЯВКУ
     // =========================
     if (interaction.isButton() && interaction.customId === "apply_country") {
@@ -145,46 +145,49 @@ module.exports = async (interaction) => {
     // =========================
     // 🌍 СТРАНА → ЗАЯВКА
     // =========================
-// 🌍 СТРАНА → ЗАЯВКА
-if (interaction.isStringSelectMenu() && interaction.customId === "country_select")
-        const countryName = interaction.values[0];
-        const config = getConfig();
+			// 🌍 СТРАНА → ЗАЯВКА
 
-        const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
 
-        const requestId = `${interaction.user.id}_${countryName}`;
+if (interaction.isStringSelectMenu() && interaction.customId === "country_select") {
 
-        const embed = new EmbedBuilder()
-            .setTitle("📋 Новая заявка")
-            .addFields(
-                { name: "👤 Игрок", value: interaction.user.tag, inline: true },
-                { name: "🌍 Страна", value: countryName, inline: true },
-                { name: "📌 Статус", value: "🟡 На рассмотрении" }
-            )
-            .setColor("Blue")
-            .setTimestamp();
+    const countryName = interaction.values[0];
+    const config = getConfig();
 
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId(`approve|${requestId}`)
-                .setLabel("🟢 Одобрить")
-                .setStyle(ButtonStyle.Success),
+    const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
 
-            new ButtonBuilder()
-                .setCustomId(`reject|${requestId}`)
-                .setLabel("🔴 Отказать")
-                .setStyle(ButtonStyle.Danger)
-        );
+    const requestId = `${interaction.user.id}_${countryName}`;
 
-        if (channel) {
-            await channel.send({ embeds: [embed], components: [row] });
-        }
+    const embed = new EmbedBuilder()
+        .setTitle("📋 Новая заявка")
+        .addFields(
+            { name: "👤 Игрок", value: interaction.user.tag, inline: true },
+            { name: "🌍 Страна", value: countryName, inline: true },
+            { name: "📌 Статус", value: "🟡 На рассмотрении" }
+        )
+        .setColor("Blue")
+        .setTimestamp();
 
-        return interaction.update({
-            content: `📋 Заявка отправлена\n🌍 ${countryName}\n📌 На рассмотрении`,
-            components: []
-        });
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`approve|${requestId}`)
+            .setLabel("🟢 Одобрить")
+            .setStyle(ButtonStyle.Success),
+
+        new ButtonBuilder()
+            .setCustomId(`reject|${requestId}`)
+            .setLabel("🔴 Отказать")
+            .setStyle(ButtonStyle.Danger)
+    );
+
+    if (channel) {
+        await channel.send({ embeds: [embed], components: [row] });
     }
+
+    return interaction.update({
+        content: `📋 Заявка отправлена\n🌍 ${countryName}\n📌 На рассмотрении`,
+        components: []
+    });
+}
 
     // =========================
     // 🟢 / 🔴 КНОПКИ
