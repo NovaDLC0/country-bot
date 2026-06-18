@@ -9,18 +9,35 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
+const fs = require("fs");
 const REGIONS = require("../data/regions");
-const { getConfig } = require("../services/configService");
 
-// 🧠 анти-дубли (по желанию)
-const processed = new Set();
+const DB_PATH = "./db.json";
 
+// =========================
+// 📦 DB
+// =========================
+function loadDB() {
+    try {
+        return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
+    } catch {
+        return { users: {} };
+    }
+}
+
+function saveDB(db) {
+    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+}
+
+// =========================
+// MAIN HANDLER
+// =========================
 module.exports = async (interaction) => {
 
     try {
 
         // =========================
-        // 📩 START PANEL → 2 BUTTONS
+        // 📩 START PANEL
         // =========================
         if (interaction.isButton() && interaction.customId === "start_country_flow") {
 
@@ -44,7 +61,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🌍 COUNTRY FLOW START → REGION SELECT
+        // 🌍 SELECT COUNTRY FLOW
         // =========================
         if (interaction.isButton() && interaction.customId === "select_country") {
 
@@ -66,7 +83,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🌍 REGION → COUNTRY SELECT
+        // 🌍 REGION SELECT
         // =========================
         if (interaction.isStringSelectMenu() && interaction.customId === "region_select") {
 
@@ -139,8 +156,15 @@ module.exports = async (interaction) => {
             const vpi = interaction.fields.getTextInputValue("vpi");
             const age = interaction.fields.getTextInputValue("age");
 
-            const config = getConfig();
-            const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
+            const db = loadDB();
+
+            db.users[interaction.user.id] = {
+                status: "pending",
+                country,
+                updatedAt: Date.now()
+            };
+
+            saveDB(db);
 
             const embed = new EmbedBuilder()
                 .setTitle("📝 Новая заявка")
@@ -148,19 +172,120 @@ module.exports = async (interaction) => {
                 .addFields(
                     { name: "👤 Игрок", value: interaction.user.tag, inline: true },
                     { name: "🏳️ Страна", value: country, inline: true },
-                    { name: "📜 Знание правил", value: rules },
-                    { name: "🌍 Ознакомлен с  ВПИ", value: vpi, inline: true },
+                    { name: "📜 Правила", value: rules },
+                    { name: "🌍 ВПИ", value: vpi, inline: true },
                     { name: "🎂 Возраст", value: age, inline: true },
                     { name: "📌 Статус", value: "🟡 На рассмотрении" }
                 )
                 .setTimestamp();
 
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`pending_${interaction.user.id}`)
+                    .setLabel("🟡 В рассмотрении")
+                    .setStyle(ButtonStyle.Secondary),
+
+                new ButtonBuilder()
+                    .setCustomId(`approve_${interaction.user.id}`)
+                    .setLabel("🟢 Одобрить")
+                    .setStyle(ButtonStyle.Success),
+
+                new ButtonBuilder()
+                    .setCustomId(`reject_${interaction.user.id}`)
+                    .setLabel("🔴 Отклонить")
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+            const config = require("../config.json");
+
+            const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
+
             if (channel) {
-                await channel.send({ embeds: [embed] });
+                await channel.send({
+                    embeds: [embed],
+                    components: [row]
+                });
             }
 
             return interaction.reply({
                 content: "✅ Заявка отправлена",
+                ephemeral: true
+            });
+        }
+
+        // =========================
+        // 🧠 MODERATION SYSTEM
+        // =========================
+        if (interaction.isButton() && (
+            interaction.customId.startsWith("approve_") ||
+            interaction.customId.startsWith("reject_") ||
+            interaction.customId.startsWith("pending_")
+        )) {
+
+            const [action, userId] = interaction.customId.split("_");
+
+            const db = loadDB();
+
+            if (!db.users[userId]) {
+                return interaction.reply({
+                    content: "❌ Заявка не найдена",
+                    ephemeral: true
+                });
+            }
+
+            if (action !== "pending" && db.users[userId].status !== "pending") {
+                return interaction.reply({
+                    content: "❌ Уже обработано",
+                    ephemeral: true
+                });
+            }
+
+            const member = await interaction.guild.members.fetch(userId).catch(() => null);
+
+            let status = "";
+            let color = "";
+            let dm = "";
+
+            if (action === "approve") {
+                db.users[userId].status = "approved";
+                status = "🟢 Одобрено";
+                color = "Green";
+                dm = "🟢 Ваша заявка одобрена";
+            }
+
+            if (action === "reject") {
+                db.users[userId].status = "rejected";
+                status = "🔴 Отклонено";
+                color = "Red";
+                dm = "🔴 Ваша заявка отклонена";
+            }
+
+            if (action === "pending") {
+                status = "🟡 На рассмотрении";
+                color = "Yellow";
+            }
+
+            db.users[userId].updatedAt = Date.now();
+            saveDB(db);
+
+            if (member && action !== "pending") {
+                member.send(`${dm}\n👑 Модератор: ${interaction.user.tag}`).catch(() => {});
+            }
+
+            const embed = EmbedBuilder.from(interaction.message.embeds[0])
+                .setColor(color)
+                .addFields({
+                    name: "📌 Статус",
+                    value: status
+                });
+
+            await interaction.message.edit({
+                embeds: [embed],
+                components: action === "pending" ? interaction.message.components : []
+            });
+
+            return interaction.reply({
+                content: `${status} | ${interaction.user.tag}`,
                 ephemeral: true
             });
         }
