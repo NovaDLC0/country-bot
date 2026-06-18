@@ -6,3 +6,4 @@ logs/*.log
 data/*.backup
 
 npm-debug.log
+.env
