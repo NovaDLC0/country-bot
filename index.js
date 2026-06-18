@@ -103,8 +103,6 @@ if (message.content === "!panel") {
     });
 }
 
-    }
-
     const { EmbedBuilder } = require("discord.js");
     const { readDB } = require("./services/dbService");
 
