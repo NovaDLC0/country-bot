@@ -43,7 +43,60 @@ const REGIONS = {
 
 module.exports = async (interaction) => {
 
-    // =========================
+ if (interaction.isButton() && interaction.customId === "start_form") {
+
+    const user = interaction.user;
+
+    await user.send("📝 АНКЕТА НА СТРАНУ");
+    await user.send("1️⃣ Вы ознакомлены с правилами? (да/нет)");
+
+    const filter = m => m.author.id === user.id;
+
+    const dm = await user.createDM();
+
+    try {
+        // 1 вопрос
+        const a1 = await dm.awaitMessages({ filter, max: 1, time: 120000, errors: ["time"] });
+        const rules = a1.first().content;
+
+        await user.send("2️⃣ Сколько вам полных лет?");
+
+        // 2 вопрос
+        const a2 = await dm.awaitMessages({ filter, max: 1, time: 120000, errors: ["time"] });
+        const age = a2.first().content;
+
+        await user.send("3️⃣ Вы понимаете что такое ВПИ?");
+
+        // 3 вопрос
+        const a3 = await dm.awaitMessages({ filter, max: 1, time: 120000, errors: ["time"] });
+        const vpi = a3.first().content;
+
+        const config = getConfig();
+        const channel = await interaction.guild.channels.fetch(config.requestsChannel);
+
+        const { EmbedBuilder } = require("discord.js");
+
+        const embed = new EmbedBuilder()
+            .setTitle("📝 Новая анкета (DM форма)")
+            .addFields(
+                { name: "👤 Игрок", value: user.tag },
+                { name: "📜Знание правил", value: rules },
+                { name: "🎂 Сколько полных лет", value: age },
+                { name: "📖 Понимвет ли что такое ВПИ", value: vpi }
+            )
+            .setColor("Blue")
+            .setTimestamp();
+
+        await channel.send({ embeds: [embed] });
+
+        await user.send("✅ Анкета отправлена на проверку!");
+
+    } catch (err) {
+        await user.send("❌ Время вышло или ошибка анкеты.");
+    }
+}
+
+|   // =========================
     // 📩 КНОПКА ПОДАТЬ ЗАЯВКУ
     // =========================
     if (interaction.isButton() && interaction.customId === "apply_country") {
@@ -92,8 +145,8 @@ module.exports = async (interaction) => {
     // =========================
     // 🌍 СТРАНА → ЗАЯВКА
     // =========================
-    if (interaction.isStringSelectMenu() && interaction.customId === "country_select") {
-
+// 🌍 СТРАНА → ЗАЯВКА
+if (interaction.isStringSelectMenu() && interaction.customId === "country_select")
         const countryName = interaction.values[0];
         const config = getConfig();
 
@@ -136,7 +189,11 @@ module.exports = async (interaction) => {
     // =========================
     // 🟢 / 🔴 КНОПКИ
     // =========================
-    if (interaction.isButton()) {
+    if (
+    interaction.isButton() &&
+    (interaction.customId.startsWith("approve|") ||
+     interaction.customId.startsWith("reject|"))
+) {
 
         const [action, requestId] = interaction.customId.split("|");
         const [userId, countryName] = requestId.split("_");

@@ -75,10 +75,34 @@ client.once("clientReady", () => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
-    // 📊 панель стран
-    if (message.content === "!panel") {
-        const panel = buildCountriesPanel();
-        return message.channel.send(panel);
+const {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
+} = require("discord.js");
+
+if (message.content === "!panel") {
+
+    const panel = buildCountriesPanel();
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId("apply_country")
+            .setLabel("🌍 Выбор страны")
+            .setStyle(ButtonStyle.Success),
+
+        new ButtonBuilder()
+            .setCustomId("start_form")
+            .setLabel("📝 Анкета")
+            .setStyle(ButtonStyle.Primary)
+    );
+
+    return message.channel.send({
+        ...panel,
+        components: [row]
+    });
+}
+
     }
 
     const { EmbedBuilder } = require("discord.js");
@@ -98,6 +122,30 @@ client.on("messageCreate", async (message) => {
         return message.channel.send({ embeds: [embed] });
     }
 
+// 📰 NEWS (ТОЛЬКО ОДИН КАНАЛ)
+if (message.content.startsWith("!news ")) {
+
+    const NEWS_CHANNEL_ID = "1163909514374955018";
+
+    if (message.channel.id !== NEWS_CHANNEL_ID) {
+        return message.reply("❌ Новости можно писать только в канале новостей.");
+    }
+
+    if (!message.member.permissions.has("Administrator")) {
+        return message.reply("❌ Нужны права администратора.");
+    }
+
+    const text = message.content.slice(6);
+
+    const embed = new EmbedBuilder()
+        .setTitle("📰 Новости")
+        .setDescription(text)
+        .setColor("Gold")
+        .setFooter({ text: `От: ${message.author.tag}` })
+        .setTimestamp();
+
+    message.channel.send({ embeds: [embed] });
+}
     // 📋 установить канал заявок
     if (message.content.startsWith("!setrequests")) {
         if (!message.member.permissions.has("Administrator")) {
