@@ -1,8 +1,17 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 
-const { buildCountriesPanel } = require("./panels/countriesPanel");
+const { buildCountriesPanel } = require("./panels/countries/countriesPanel");
 const handleButtons = require("./handlers/buttonsHandler");
+
 const { getConfig, saveConfig } = require("./services/configService");
+const { readDB } = require("./services/dbService");
+
+const {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    EmbedBuilder
+} = require("discord.js");
 
 const client = new Client({
     intents: [
@@ -15,100 +24,76 @@ const client = new Client({
 });
 
 // ==========================================
-// 🔥 ЗАПУСК БОТА + СТАТУСЫ
+// 🔥 READY EVENT
 // ==========================================
-client.once("clientReady", () => {
-    // ==========================================
-    // 1️⃣ СТАТУС АКТИВНОСТИ (Activity Status)
-    // ==========================================
+client.once("ready", () => {
+
     client.user.setActivity("🌍 WORLD WIDE", { type: "WATCHING" });
 
-    // ==========================================
-    // 2️⃣ КАСТОМНЫЙ СТАТУС (Custom Status)
-    // ==========================================
     client.user.setPresence({
         status: "online",
         activities: [{
-            name: "Люблю WORLD WIDE ❤️",
-            type: "CUSTOM",
-            state: "Люблю WORLD WIDE ❤️"
+            name: "WORLD WIDE",
+            type: "WATCHING"
         }]
     });
 
-    console.log("\x1b[36m%s\x1b[0m", `
-    ╔══════════════════════════════════════════════════════════════╗
-    ║                                                              ║
-    ║     ██████╗ ██████╗ ██╗   ██╗███╗   ██╗████████╗██████╗   ║
-    ║    ██╔════╝██╔═══██╗██║   ██║████╗  ██║╚══██╔══╝██╔══██╗  ║
-    ║    ██║     ██║   ██║██║   ██║██╔██╗ ██║   ██║   ██████╔╝  ║
-    ║    ██║     ██║   ██║██║   ██║██║╚██╗██║   ██║   ██╔══██╗  ║
-    ║    ╚██████╗╚██████╔╝╚██████╔╝██║ ╚████║   ██║   ██║  ██║  ║
-    ║     ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝  ║
-    ║                                                              ║
-    ║              🤖 БОТ УСПЕШНО ЗАПУЩЕН! 🚀                    ║
-    ║                                                              ║
-    ╠══════════════════════════════════════════════════════════════╣
-    ║  📌 Имя:     ${(client.user.tag).padEnd(30)}║
-    ║  🆔 ID:      ${(client.user.id).padEnd(30)}║
-    ║  📊 Серверов: ${(String(client.guilds.cache.size)).padEnd(30)}║
-    ║  👥 Пользователей: ${(String(client.users.cache.size)).padEnd(30)}║
-    ║  ⏰ Запущен: ${(new Date().toLocaleString()).padEnd(30)}║
-    ╠══════════════════════════════════════════════════════════════╣
-    ║  ✅ Бот готов к работе!                                     ║
-    ║                                                              ║
-    ║  📋 КОМАНДЫ НА СЕРВЕРЕ:                                     ║
-    ║  💬 !panel     - Открыть панель стран                      ║
-    ║  💬 !countries - Показать список стран                     ║
-    ║  💬 !setrequests #канал - Установить канал заявок         ║
-    ║  💬 !ping      - Проверить задержку                        ║
-    ║                                                              ║
-    ║  📩 КОМАНДЫ В ЛИЧНЫХ СООБЩЕНИЯХ:                           ║
-    ║  💬 !говори #канал текст - Отправить сообщение от бота    ║
-    ║                                                              ║
-    ╚══════════════════════════════════════════════════════════════╝
-    `);
+    console.log(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🤖  WORLD WIDE BOT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟢 Status: ONLINE
+🌍 Mode: Global Country System
+⚡ Version: Global Beta 0.1.1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Bot: ${client.user.tag}
+🆔 ID: ${client.user.id}
+📡 Servers: ${client.guilds.cache.size}
+👥 Users: ${client.users.cache.size}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 System: READY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`);
 });
 
 // ==========================================
-// 📩 КОМАНДЫ (messageCreate)
+// 💬 MESSAGE COMMANDS
 // ==========================================
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
-const {
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle
-} = require("discord.js");
+    // 📊 PANEL
+    if (message.content === "!panel") {
 
-if (message.content === "!panel") {
+        const panel = buildCountriesPanel();
 
-    const panel = buildCountriesPanel();
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId("apply_country")
+                .setLabel("🌍 Выбор страны")
+                .setStyle(ButtonStyle.Success),
 
-    const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId("apply_country")
-            .setLabel("🌍 Выбор страны")
-            .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId("start_form")
+                .setLabel("📝 Анкета")
+                .setStyle(ButtonStyle.Primary)
+        );
 
-        new ButtonBuilder()
-            .setCustomId("start_form")
-            .setLabel("📝 Анкета")
-            .setStyle(ButtonStyle.Primary)
-    );
+        return message.channel.send({
+            ...panel,
+            components: [row]
+        });
+    }
 
-    return message.channel.send({
-        ...panel,
-        components: [row]
-    });
-}
-
-    const { EmbedBuilder } = require("discord.js");
-    const { readDB } = require("./services/dbService");
-
+    // 🌍 COUNTRIES LIST
     if (message.content === "!countries") {
+
         const db = readDB();
-        const list = Object.entries(db.countries)
+
+        const list = Object.entries(db.countries || {})
             .map(([country, userId]) => `🌍 **${country}** — <@${userId}>`)
             .join("\n") || "Пусто";
 
@@ -120,41 +105,40 @@ if (message.content === "!panel") {
         return message.channel.send({ embeds: [embed] });
     }
 
-// 📰 NEWS (ТОЛЬКО ОДИН КАНАЛ)
-if (message.content.startsWith("!news ")) {
+    // 📰 NEWS
+    if (message.content.startsWith("!news ")) {
 
-    const NEWS_CHANNEL_ID = "1163909514374955018";
+        const NEWS_CHANNEL_ID = "1163909514374955018";
 
-    if (message.channel.id !== NEWS_CHANNEL_ID) {
-        return message.reply("❌ Новости можно писать только в канале новостей.");
+        if (message.channel.id !== NEWS_CHANNEL_ID) {
+            return message.reply("❌ Новости можно писать только в канале новостей.");
+        }
+
+        if (!message.member.permissions.has("Administrator")) {
+            return message.reply("❌ Нужны права администратора.");
+        }
+
+        const text = message.content.slice(6);
+
+        const embed = new EmbedBuilder()
+            .setTitle("📰 Новости")
+            .setDescription(text)
+            .setColor("Gold")
+            .setFooter({ text: `От: ${message.author.tag}` })
+            .setTimestamp();
+
+        return message.channel.send({ embeds: [embed] });
     }
 
-    if (!message.member.permissions.has("Administrator")) {
-        return message.reply("❌ Нужны права администратора.");
-    }
-
-    const text = message.content.slice(6);
-
-    const embed = new EmbedBuilder()
-        .setTitle("📰 Новости")
-        .setDescription(text)
-        .setColor("Gold")
-        .setFooter({ text: `От: ${message.author.tag}` })
-        .setTimestamp();
-
-    message.channel.send({ embeds: [embed] });
-}
-    // 📋 установить канал заявок
+    // 📋 SET REQUESTS CHANNEL
     if (message.content.startsWith("!setrequests")) {
+
         if (!message.member.permissions.has("Administrator")) {
             return message.reply("❌ Нужны права администратора.");
         }
 
         const channel = message.mentions.channels.first();
-
-        if (!channel) {
-            return message.reply("Использование: !setrequests #канал");
-        }
+        if (!channel) return message.reply("Использование: !setrequests #канал");
 
         const config = getConfig();
         config.requestsChannel = channel.id;
@@ -163,45 +147,38 @@ if (message.content.startsWith("!news ")) {
         return message.reply(`✅ Канал заявок установлен: ${channel}`);
     }
 
-    // 🧪 тест
+    // 🧪 PING
     if (message.content === "!ping") {
         return message.reply("🏓 Pong!");
     }
 
-    // ==========================================
-    // 📩 КОМАНДА !говори (ТОЛЬКО ИЗ ЛИЧНЫХ СООБЩЕНИЙ)
-    // ==========================================
+    // 📩 DM COMMAND
     if (message.channel.type === 1) {
-        if (message.author.id === '1195596012849483808') {
-            if (message.content.startsWith('!говори ')) {
-                const args = message.content.slice(9).split(' ');
+
+        if (message.author.id === "1195596012849483808") {
+
+            if (message.content.startsWith("!говори ")) {
+
+                const args = message.content.slice(9).split(" ");
                 const channelMention = args[0];
-                const text = args.slice(1).join(' ');
+                const text = args.slice(1).join(" ");
 
-                if (!channelMention || !text) {
-                    return message.reply('❌ Использование: !говори #канал текст');
-                }
-
-                const channelId = channelMention.replace(/[<#>]/g, '');
+                const channelId = channelMention.replace(/[<#>]/g, "");
                 const channel = client.channels.cache.get(channelId);
 
                 if (!channel) {
-                    return message.reply('❌ Канал не найден!');
+                    return message.reply("❌ Канал не найден");
                 }
 
-                try {
-                    await channel.send(text);
-                    await message.reply(`✅ Отправлено в ${channelMention}`);
-                } catch (error) {
-                    await message.reply(`❌ Ошибка: ${error.message}`);
-                }
+                await channel.send(text);
+                return message.reply("✅ Отправлено");
             }
         }
     }
 });
 
 // ==========================================
-// 🎮 КНОПКИ + INTERACTIONS
+// 🎮 INTERACTIONS
 // ==========================================
 client.on("interactionCreate", async (interaction) => {
     try {
