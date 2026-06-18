@@ -30,14 +30,14 @@ function saveDB(db) {
 }
 
 // =========================
-// MAIN HANDLER
+// MAIN
 // =========================
 module.exports = async (interaction) => {
 
     try {
 
         // =========================
-        // 📩 START PANEL
+        // 🌍 START PANEL
         // =========================
         if (interaction.isButton() && interaction.customId === "start_country_flow") {
 
@@ -49,7 +49,7 @@ module.exports = async (interaction) => {
 
                 new ButtonBuilder()
                     .setCustomId("fill_form")
-                    .setLabel("📝 Заполнить анкету")
+                    .setLabel("📝 Анкета")
                     .setStyle(ButtonStyle.Success)
             );
 
@@ -108,20 +108,20 @@ module.exports = async (interaction) => {
 
             const buttons = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`prev_page_${region}_${page}`)
-                    .setLabel("⬅️ Назад")
+                    .setCustomId(`prev_${region}_${page}`)
+                    .setLabel("⬅️")
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(true),
 
                 new ButtonBuilder()
-                    .setCustomId(`next_page_${region}_${page}`)
-                    .setLabel("➡️ Вперёд")
+                    .setCustomId(`next_${region}_${page}`)
+                    .setLabel("➡️")
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(countries.length <= 25)
             );
 
             return interaction.update({
-                content: `🏳️ Выберите страну (${region})`,
+                content: `🏳️ ${region}`,
                 components: [
                     new ActionRowBuilder().addComponents(menu),
                     buttons
@@ -132,9 +132,9 @@ module.exports = async (interaction) => {
         // =========================
         // ➡️ NEXT PAGE
         // =========================
-        if (interaction.isButton() && interaction.customId.startsWith("next_page_")) {
+        if (interaction.isButton() && interaction.customId.startsWith("next_")) {
 
-            const [, , region, pageStr] = interaction.customId.split("_");
+            const [, region, pageStr] = interaction.customId.split("_");
 
             const countries = REGIONS[region] || [];
             const page = parseInt(pageStr) + 1;
@@ -155,14 +155,14 @@ module.exports = async (interaction) => {
 
             const buttons = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`prev_page_${region}_${page}`)
-                    .setLabel("⬅️ Назад")
+                    .setCustomId(`prev_${region}_${page}`)
+                    .setLabel("⬅️")
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(page === 0),
 
                 new ButtonBuilder()
-                    .setCustomId(`next_page_${region}_${page}`)
-                    .setLabel("➡️ Вперёд")
+                    .setCustomId(`next_${region}_${page}`)
+                    .setLabel("➡️")
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled((page + 1) * perPage >= countries.length)
             );
@@ -178,9 +178,9 @@ module.exports = async (interaction) => {
         // =========================
         // ⬅️ PREV PAGE
         // =========================
-        if (interaction.isButton() && interaction.customId.startsWith("prev_page_")) {
+        if (interaction.isButton() && interaction.customId.startsWith("prev_")) {
 
-            const [, , region, pageStr] = interaction.customId.split("_");
+            const [, region, pageStr] = interaction.customId.split("_");
 
             const countries = REGIONS[region] || [];
             const page = Math.max(0, parseInt(pageStr) - 1);
@@ -201,14 +201,14 @@ module.exports = async (interaction) => {
 
             const buttons = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`prev_page_${region}_${page}`)
-                    .setLabel("⬅️ Назад")
+                    .setCustomId(`prev_${region}_${page}`)
+                    .setLabel("⬅️")
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(page === 0),
 
                 new ButtonBuilder()
-                    .setCustomId(`next_page_${region}_${page}`)
-                    .setLabel("➡️ Вперёд")
+                    .setCustomId(`next_${region}_${page}`)
+                    .setLabel("➡️")
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled((page + 1) * perPage >= countries.length)
             );
@@ -229,24 +229,24 @@ module.exports = async (interaction) => {
             const country = interaction.values[0];
 
             const modal = new ModalBuilder()
-                .setCustomId(`application_modal_${country}`)
-                .setTitle(`📝 Заявка: ${country}`);
+                .setCustomId(`modal_${country}`)
+                .setTitle(`Заявка: ${country}`);
 
             const q1 = new TextInputBuilder()
                 .setCustomId("rules")
-                .setLabel("📜 Понимаете правила сервера?")
+                .setLabel("Правила сервера?")
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true);
 
             const q2 = new TextInputBuilder()
                 .setCustomId("vpi")
-                .setLabel("🌍 Что такое ВПИ?")
+                .setLabel("Что такое ВПИ?")
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true);
 
             const q3 = new TextInputBuilder()
                 .setCustomId("age")
-                .setLabel("🎂 Сколько вам лет?")
+                .setLabel("Возраст?")
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true);
 
@@ -260,157 +260,114 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 📝 MODAL SUBMIT
+        // 📝 MODAL SUBMIT (FIXED)
         // =========================
-        if (interaction.isModalSubmit() && interaction.customId.startsWith("application_modal_")) {
+        if (interaction.isModalSubmit() && interaction.customId.startsWith("modal_")) {
 
-            const country = interaction.customId.replace("application_modal_", "");
+            try {
 
-            const rules = interaction.fields.getTextInputValue("rules");
-            const vpi = interaction.fields.getTextInputValue("vpi");
-            const age = interaction.fields.getTextInputValue("age");
+                const country = interaction.customId.replace("modal_", "");
 
-            const db = loadDB();
+                const rules = interaction.fields.getTextInputValue("rules");
+                const vpi = interaction.fields.getTextInputValue("vpi");
+                const age = interaction.fields.getTextInputValue("age");
 
-            db.users[interaction.user.id] = {
-                status: "pending",
-                country,
-                updatedAt: Date.now()
-            };
+                const db = loadDB();
 
-            saveDB(db);
+                db.users[interaction.user.id] = {
+                    status: "pending",
+                    country,
+                    updatedAt: Date.now()
+                };
 
-            const embed = new EmbedBuilder()
-                .setTitle("📝 Новая заявка")
-                .setColor("Purple")
-                .addFields(
-                    { name: "👤 Игрок", value: interaction.user.tag, inline: true },
-                    { name: "🏳️ Страна", value: country, inline: true },
-                    { name: "📜 Правила", value: rules },
-                    { name: "🌍 ВПИ", value: vpi, inline: true },
-                    { name: "🎂 Возраст", value: age, inline: true },
-                    { name: "📌 Статус", value: "🟡 На рассмотрении" }
-                )
-                .setTimestamp();
+                saveDB(db);
 
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`pending_${interaction.user.id}`)
-                    .setLabel("🟡 В рассмотрении")
-                    .setStyle(ButtonStyle.Secondary),
+                const config = require("../config.json");
 
-                new ButtonBuilder()
-                    .setCustomId(`approve_${interaction.user.id}`)
-                    .setLabel("🟢 Одобрить")
-                    .setStyle(ButtonStyle.Success),
+                const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
 
-                new ButtonBuilder()
-                    .setCustomId(`reject_${interaction.user.id}`)
-                    .setLabel("🔴 Отклонить")
-                    .setStyle(ButtonStyle.Danger)
-            );
+                if (!channel) {
+                    return interaction.reply({
+                        content: "❌ Канал заявок не найден",
+                        ephemeral: true
+                    });
+                }
 
-            const config = require("../config.json");
+                const embed = new EmbedBuilder()
+                    .setTitle("📝 Новая заявка")
+                    .setColor("Purple")
+                    .addFields(
+                        { name: "Игрок", value: interaction.user.tag },
+                        { name: "Страна", value: country },
+                        { name: "Правила", value: rules.slice(0, 1024) },
+                        { name: "ВПИ", value: vpi.slice(0, 1024) },
+                        { name: "Возраст", value: age }
+                    );
 
-            const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
+                const row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`approve_${interaction.user.id}`)
+                        .setLabel("Одобрить")
+                        .setStyle(ButtonStyle.Success),
 
-            if (channel) {
-                await channel.send({
-                    embeds: [embed],
-                    components: [row]
+                    new ButtonBuilder()
+                        .setCustomId(`reject_${interaction.user.id}`)
+                        .setLabel("Отклонить")
+                        .setStyle(ButtonStyle.Danger)
+                );
+
+                await channel.send({ embeds: [embed], components: [row] });
+
+                return interaction.reply({
+                    content: "Заявка отправлена",
+                    ephemeral: true
+                });
+
+            } catch (e) {
+                console.error(e);
+                return interaction.reply({
+                    content: "Ошибка модалки",
+                    ephemeral: true
                 });
             }
-
-            return interaction.reply({
-                content: "✅ Заявка отправлена",
-                ephemeral: true
-            });
         }
 
         // =========================
         // 🧠 MODERATION + ROLE
         // =========================
-        if (interaction.isButton() && (
-            interaction.customId.startsWith("approve_") ||
-            interaction.customId.startsWith("reject_") ||
-            interaction.customId.startsWith("pending_")
-        )) {
+        if (interaction.isButton() && interaction.customId.startsWith("approve_") || interaction.customId.startsWith("reject_")) {
 
             const [action, userId] = interaction.customId.split("_");
 
             const db = loadDB();
 
-            if (!db.users[userId]) {
-                return interaction.reply({
-                    content: "❌ Заявка не найдена",
-                    ephemeral: true
-                });
-            }
-
             const member = await interaction.guild.members.fetch(userId).catch(() => null);
-
-            let status = "";
-            let color = "";
-            let dm = "";
 
             if (action === "approve") {
 
                 db.users[userId].status = "approved";
-                db.users[userId].updatedAt = Date.now();
+                saveDB(db);
 
-                status = "🟢 Одобрено";
-                color = "Green";
-                dm = "🟢 Ваша заявка одобрена";
-
-                // 🎯 РОЛЬ ГОСУДАРСТВО
                 if (member) {
                     const role = interaction.guild.roles.cache.find(r =>
                         r.name === "Государство"
                     );
-
-                    if (role) {
-                        await member.roles.add(role).catch(() => {});
-                    }
+                    if (role) await member.roles.add(role).catch(() => {});
                 }
             }
 
             if (action === "reject") {
-
                 db.users[userId].status = "rejected";
-                db.users[userId].updatedAt = Date.now();
-
-                status = "🔴 Отклонено";
-                color = "Red";
-                dm = "🔴 Ваша заявка отклонена";
-            }
-
-            if (action === "pending") {
-                status = "🟡 На рассмотрении";
-                color = "Yellow";
-            }
-
-            saveDB(db);
-
-            const embed = EmbedBuilder.from(interaction.message.embeds[0])
-                .setColor(color)
-                .addFields({ name: "📌 Статус", value: status });
-
-            await interaction.message.edit({
-                embeds: [embed],
-                components: action === "pending" ? interaction.message.components : []
-            });
-
-            if (member && action !== "pending") {
-                member.send(`${dm}\n👑 Модератор: ${interaction.user.tag}`).catch(() => {});
+                saveDB(db);
             }
 
             return interaction.reply({
-                content: `${status} | ${interaction.user.tag}`,
+                content: "Обработано",
                 ephemeral: true
             });
         }
 
     } catch (err) {
-        console.error("BUTTON HANDLER ERROR:", err);
+        console.error("HANDLER ERROR:", err);
     }
 };
