@@ -15,6 +15,23 @@ const client = new Client({
 });
 
 client.once("ready", () => {
+    // ==========================================
+    // 🔥 СТАТУСЫ БОТА (ДОБАВЛЕНО!)
+    // ==========================================
+    // 1. Статус активности: "Смотрит WORLD WIDE"
+    client.user.setActivity("🌍 WORLD WIDE", { type: "WATCHING" });
+
+    // 2. Кастомный статус: "Люблю WORLD WIDE ❤️"
+    client.user.setPresence({
+        status: "online",
+        activities: [{
+            name: "Люблю WORLD WIDE ❤️",
+            type: "CUSTOM",
+            state: "Люблю WORLD WIDE ❤️"
+        }]
+    });
+    // ==========================================
+
     console.log("\x1b[36m%s\x1b[0m", `
     ╔══════════════════════════════════════════════════════════════╗
     ║                                                              ║
