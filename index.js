@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 
-const { buildCountriesPanel } = require("./panels/countries/countriesPanel");
+const { buildCountriesPanel } = require("./panels/countriesPanel");
 const handleButtons = require("./handlers/buttonsHandler");
 
 const { getConfig, saveConfig } = require("./services/configService");
