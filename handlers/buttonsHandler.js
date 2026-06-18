@@ -366,14 +366,20 @@ module.exports = async (interaction) => {
             });
         }
 
-    } catch (err) {
-        console.error("HANDLER ERROR:", err);
+catch (err) {
+    console.log("━━━━━━━━━━━━━━━━━━━━");
+    console.log("❌ ERROR TYPE:", err?.name);
+    console.log("❌ ERROR MESSAGE:", err?.message);
+    console.log("━━━━━━━━━━━━━━━━━━━━");
+    console.log(err?.stack);
+    console.log("━━━━━━━━━━━━━━━━━━━━");
 
-        if (!interaction.replied) {
-            await interaction.reply({
-                content: "❌ Ошибка в боте",
+    if (!interaction.replied && !interaction.deferred) {
+        try {
+            return interaction.reply({
+                content: `❌ Ошибка: ${err?.message}`,
                 ephemeral: true
             });
-        }
+        } catch {}
     }
-};
+}
