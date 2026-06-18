@@ -30,14 +30,14 @@ function saveDB(db) {
 }
 
 // =========================
-// MAIN
+// MAIN HANDLER
 // =========================
 module.exports = async (interaction) => {
 
     try {
 
         // =========================
-        // 📩 PANEL START
+        // 📩 START PANEL
         // =========================
         if (interaction.isButton() && interaction.customId === "start_country_flow") {
 
@@ -61,7 +61,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🌍 REGION MENU
+        // 🌍 REGION SELECT
         // =========================
         if (interaction.isButton() && interaction.customId === "select_country") {
 
@@ -83,7 +83,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🌍 REGION → COUNTRIES (PAGINATION)
+        // 🌍 REGION → PAGE 1
         // =========================
         if (interaction.isStringSelectMenu() && interaction.customId === "region_select") {
 
@@ -106,9 +106,118 @@ module.exports = async (interaction) => {
                     }))
                 );
 
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`prev_page_${region}_${page}`)
+                    .setLabel("⬅️ Назад")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true),
+
+                new ButtonBuilder()
+                    .setCustomId(`next_page_${region}_${page}`)
+                    .setLabel("➡️ Вперёд")
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(countries.length <= 25)
+            );
+
             return interaction.update({
                 content: `🏳️ Выберите страну (${region})`,
-                components: [new ActionRowBuilder().addComponents(menu)]
+                components: [
+                    new ActionRowBuilder().addComponents(menu),
+                    buttons
+                ]
+            });
+        }
+
+        // =========================
+        // ➡️ NEXT PAGE
+        // =========================
+        if (interaction.isButton() && interaction.customId.startsWith("next_page_")) {
+
+            const [, , region, pageStr] = interaction.customId.split("_");
+
+            const countries = REGIONS[region] || [];
+            const page = parseInt(pageStr) + 1;
+
+            const perPage = 25;
+            const chunk = countries.slice(page * perPage, (page + 1) * perPage);
+
+            const menu = new StringSelectMenuBuilder()
+                .setCustomId(`country_select_${region}_${page}`)
+                .setPlaceholder(`🏳️ ${region} (стр. ${page + 1})`)
+                .addOptions(
+                    chunk.map(c => ({
+                        label: c,
+                        value: c,
+                        emoji: "🏳️"
+                    }))
+                );
+
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`prev_page_${region}_${page}`)
+                    .setLabel("⬅️ Назад")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(page === 0),
+
+                new ButtonBuilder()
+                    .setCustomId(`next_page_${region}_${page}`)
+                    .setLabel("➡️ Вперёд")
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled((page + 1) * perPage >= countries.length)
+            );
+
+            return interaction.update({
+                components: [
+                    new ActionRowBuilder().addComponents(menu),
+                    buttons
+                ]
+            });
+        }
+
+        // =========================
+        // ⬅️ PREV PAGE
+        // =========================
+        if (interaction.isButton() && interaction.customId.startsWith("prev_page_")) {
+
+            const [, , region, pageStr] = interaction.customId.split("_");
+
+            const countries = REGIONS[region] || [];
+            const page = Math.max(0, parseInt(pageStr) - 1);
+
+            const perPage = 25;
+            const chunk = countries.slice(page * perPage, (page + 1) * perPage);
+
+            const menu = new StringSelectMenuBuilder()
+                .setCustomId(`country_select_${region}_${page}`)
+                .setPlaceholder(`🏳️ ${region} (стр. ${page + 1})`)
+                .addOptions(
+                    chunk.map(c => ({
+                        label: c,
+                        value: c,
+                        emoji: "🏳️"
+                    }))
+                );
+
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`prev_page_${region}_${page}`)
+                    .setLabel("⬅️ Назад")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(page === 0),
+
+                new ButtonBuilder()
+                    .setCustomId(`next_page_${region}_${page}`)
+                    .setLabel("➡️ Вперёд")
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled((page + 1) * perPage >= countries.length)
+            );
+
+            return interaction.update({
+                components: [
+                    new ActionRowBuilder().addComponents(menu),
+                    buttons
+                ]
             });
         }
 
@@ -219,7 +328,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🧠 MODERATION
+        // 🧠 MODERATION + ROLE
         // =========================
         if (interaction.isButton() && (
             interaction.customId.startsWith("approve_") ||
@@ -282,10 +391,6 @@ module.exports = async (interaction) => {
 
             saveDB(db);
 
-            if (member && action !== "pending") {
-                member.send(`${dm}\n👑 Модератор: ${interaction.user.tag}`).catch(() => {});
-            }
-
             const embed = EmbedBuilder.from(interaction.message.embeds[0])
                 .setColor(color)
                 .addFields({ name: "📌 Статус", value: status });
@@ -294,6 +399,10 @@ module.exports = async (interaction) => {
                 embeds: [embed],
                 components: action === "pending" ? interaction.message.components : []
             });
+
+            if (member && action !== "pending") {
+                member.send(`${dm}\n👑 Модератор: ${interaction.user.tag}`).catch(() => {});
+            }
 
             return interaction.reply({
                 content: `${status} | ${interaction.user.tag}`,
