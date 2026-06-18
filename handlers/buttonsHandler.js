@@ -30,7 +30,18 @@ function saveDB(db) {
 }
 
 // =========================
-// MAIN
+// SAFE ID (ВАЖНО)
+// =========================
+function safe(str) {
+    return str.replaceAll(" ", "_");
+}
+
+function unsafify(str) {
+    return str.replaceAll("_", " ");
+}
+
+// =========================
+// HANDLER
 // =========================
 module.exports = async (interaction) => {
 
@@ -67,7 +78,7 @@ module.exports = async (interaction) => {
 
             const menu = new StringSelectMenuBuilder()
                 .setCustomId("region_select")
-                .setPlaceholder("🌍 Выберите регион")
+                .setPlaceholder("🌍 Регион")
                 .addOptions([
                     { label: "Европа", value: "europe", emoji: "🇪🇺" },
                     { label: "Америка", value: "america", emoji: "🌎" },
@@ -76,7 +87,7 @@ module.exports = async (interaction) => {
                 ]);
 
             return interaction.reply({
-                content: "🌍 Выберите регион:",
+                content: "Выберите регион:",
                 components: [new ActionRowBuilder().addComponents(menu)],
                 ephemeral: true
             });
@@ -96,8 +107,8 @@ module.exports = async (interaction) => {
             const chunk = countries.slice(0, perPage);
 
             const menu = new StringSelectMenuBuilder()
-                .setCustomId(`country_select_${region}_${page}`)
-                .setPlaceholder(`🏳️ ${region} (стр. 1)`)
+                .setCustomId(`country_${region}_${page}`)
+                .setPlaceholder(`Страны (${region})`)
                 .addOptions(
                     chunk.map(c => ({
                         label: c,
@@ -121,7 +132,6 @@ module.exports = async (interaction) => {
             );
 
             return interaction.update({
-                content: `🏳️ ${region}`,
                 components: [
                     new ActionRowBuilder().addComponents(menu),
                     buttons
@@ -143,8 +153,8 @@ module.exports = async (interaction) => {
             const chunk = countries.slice(page * perPage, (page + 1) * perPage);
 
             const menu = new StringSelectMenuBuilder()
-                .setCustomId(`country_select_${region}_${page}`)
-                .setPlaceholder(`🏳️ ${region} (стр. ${page + 1})`)
+                .setCustomId(`country_${region}_${page}`)
+                .setPlaceholder(`Страны (${region})`)
                 .addOptions(
                     chunk.map(c => ({
                         label: c,
@@ -189,8 +199,8 @@ module.exports = async (interaction) => {
             const chunk = countries.slice(page * perPage, (page + 1) * perPage);
 
             const menu = new StringSelectMenuBuilder()
-                .setCustomId(`country_select_${region}_${page}`)
-                .setPlaceholder(`🏳️ ${region} (стр. ${page + 1})`)
+                .setCustomId(`country_${region}_${page}`)
+                .setPlaceholder(`Страны (${region})`)
                 .addOptions(
                     chunk.map(c => ({
                         label: c,
@@ -222,33 +232,30 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 🏳️ COUNTRY → MODAL
+        // 🏳️ COUNTRY → MODAL (FIXED)
         // =========================
-        if (interaction.isStringSelectMenu() && interaction.customId.startsWith("country_select_")) {
+        if (interaction.isStringSelectMenu() && interaction.customId.startsWith("country_")) {
 
             const country = interaction.values[0];
 
             const modal = new ModalBuilder()
-		.setCustomId(`modal_${country.replaceAll(" ", "_")}`)
-                .setTitle(`Заявка: ${country}`);
+                .setCustomId(`modal_${safe(country)}`)
+                .setTitle(`Заявка`);
 
             const q1 = new TextInputBuilder()
                 .setCustomId("rules")
                 .setLabel("Правила сервера?")
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
+                .setStyle(TextInputStyle.Short);
 
             const q2 = new TextInputBuilder()
                 .setCustomId("vpi")
                 .setLabel("Что такое ВПИ?")
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
+                .setStyle(TextInputStyle.Short);
 
             const q3 = new TextInputBuilder()
                 .setCustomId("age")
                 .setLabel("Возраст?")
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
+                .setStyle(TextInputStyle.Short);
 
             modal.addComponents(
                 new ActionRowBuilder().addComponents(q1),
@@ -260,83 +267,74 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // 📝 MODAL SUBMIT (FIXED)
+        // 📝 MODAL SUBMIT (100% FIX)
         // =========================
         if (interaction.isModalSubmit() && interaction.customId.startsWith("modal_")) {
 
-            try {
+            const country = unsafify(interaction.customId.replace("modal_", ""));
 
-		const country = interaction.customId.replace("modal_", "").replaceAll("_", " ");
-                
+            const rules = interaction.fields.getTextInputValue("rules") || "—";
+            const vpi = interaction.fields.getTextInputValue("vpi") || "—";
+            const age = interaction.fields.getTextInputValue("age") || "—";
 
-		const rules = interaction.fields.getTextInputValue("rules");
-                const vpi = interaction.fields.getTextInputValue("vpi");
-                const age = interaction.fields.getTextInputValue("age");
+            const db = loadDB();
 
-                const db = loadDB();
+            db.users[interaction.user.id] = {
+                status: "pending",
+                country,
+                updatedAt: Date.now()
+            };
 
-                db.users[interaction.user.id] = {
-                    status: "pending",
-                    country,
-                    updatedAt: Date.now()
-                };
+            saveDB(db);
 
-                saveDB(db);
+            const config = require("../config.json");
 
-                const config = require("../config.json");
+            const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
 
-                const channel = await interaction.guild.channels.fetch(config.requestsChannel).catch(() => null);
-
-                if (!channel) {
-                    return interaction.reply({
-                        content: "❌ Канал заявок не найден",
-                        ephemeral: true
-                    });
-                }
-
-                const embed = new EmbedBuilder()
-                    .setTitle("📝 Новая заявка")
-                    .setColor("Purple")
-                    .addFields(
-                        { name: "Игрок", value: interaction.user.tag },
-                        { name: "Страна", value: country },
-                        { name: "Правила", value: rules.slice(0, 1024) },
-                        { name: "ВПИ", value: vpi.slice(0, 1024) },
-                        { name: "Возраст", value: age }
-                    );
-
-                const row = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`approve_${interaction.user.id}`)
-                        .setLabel("Одобрить")
-                        .setStyle(ButtonStyle.Success),
-
-                    new ButtonBuilder()
-                        .setCustomId(`reject_${interaction.user.id}`)
-                        .setLabel("Отклонить")
-                        .setStyle(ButtonStyle.Danger)
-                );
-
-                await channel.send({ embeds: [embed], components: [row] });
-
+            if (!channel) {
                 return interaction.reply({
-                    content: "Заявка отправлена",
-                    ephemeral: true
-                });
-
-            } catch (e) {
-                console.error(e);
-                return interaction.reply({
-                    content: "Ошибка модалки",
+                    content: "❌ Канал заявок не найден",
                     ephemeral: true
                 });
             }
+
+            const embed = new EmbedBuilder()
+                .setTitle("📝 Новая заявка")
+                .setColor("Purple")
+                .addFields(
+                    { name: "Игрок", value: interaction.user.tag },
+                    { name: "Страна", value: country },
+                    { name: "Правила", value: rules.slice(0, 1024) },
+                    { name: "ВПИ", value: vpi.slice(0, 1024) },
+                    { name: "Возраст", value: age }
+                );
+
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`approve_${interaction.user.id}`)
+                    .setLabel("Одобрить")
+                    .setStyle(ButtonStyle.Success),
+
+                new ButtonBuilder()
+                    .setCustomId(`reject_${interaction.user.id}`)
+                    .setLabel("Отклонить")
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+            await channel.send({ embeds: [embed], components: [row] });
+
+            return interaction.reply({
+                content: "Заявка отправлена",
+                ephemeral: true
+            });
         }
 
         // =========================
-        // 🧠 MODERATION + ROLE
+        // 🧠 APPROVE / REJECT FIXED
         // =========================
-        if (interaction.isButton() && interaction.customId.startsWith("approve_") || interaction.customId.startsWith("reject_")) {
+        if (interaction.isButton() &&
+            (interaction.customId.startsWith("approve_") ||
+             interaction.customId.startsWith("reject_"))) {
 
             const [action, userId] = interaction.customId.split("_");
 
@@ -370,5 +368,12 @@ module.exports = async (interaction) => {
 
     } catch (err) {
         console.error("HANDLER ERROR:", err);
+
+        if (!interaction.replied) {
+            await interaction.reply({
+                content: "❌ Ошибка в боте",
+                ephemeral: true
+            });
+        }
     }
 };
