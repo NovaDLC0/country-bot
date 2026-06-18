@@ -14,14 +14,18 @@ const client = new Client({
     ]
 });
 
-client.once("ready", () => {
+// ==========================================
+// 🔥 ЗАПУСК БОТА + СТАТУСЫ
+// ==========================================
+client.once("clientReady", () => {
     // ==========================================
-    // 🔥 СТАТУСЫ БОТА (ДОБАВЛЕНО!)
+    // 1️⃣ СТАТУС АКТИВНОСТИ (Activity Status)
     // ==========================================
-    // 1. Статус активности: "Смотрит WORLD WIDE"
     client.user.setActivity("🌍 WORLD WIDE", { type: "WATCHING" });
 
-    // 2. Кастомный статус: "Люблю WORLD WIDE ❤️"
+    // ==========================================
+    // 2️⃣ КАСТОМНЫЙ СТАТУС (Custom Status)
+    // ==========================================
     client.user.setPresence({
         status: "online",
         activities: [{
@@ -30,7 +34,6 @@ client.once("ready", () => {
             state: "Люблю WORLD WIDE ❤️"
         }]
     });
-    // ==========================================
 
     console.log("\x1b[36m%s\x1b[0m", `
     ╔══════════════════════════════════════════════════════════════╗
@@ -66,16 +69,16 @@ client.once("ready", () => {
     `);
 });
 
-//
+// ==========================================
 // 📩 КОМАНДЫ (messageCreate)
-//
+// ==========================================
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     // 📊 панель стран
     if (message.content === "!panel") {
         const panel = buildCountriesPanel();
-        message.channel.send(panel);
+        return message.channel.send(panel);
     }
 
     const { EmbedBuilder } = require("discord.js");
@@ -116,7 +119,7 @@ client.on("messageCreate", async (message) => {
 
     // 🧪 тест
     if (message.content === "!ping") {
-        message.reply("🏓 Pong!");
+        return message.reply("🏓 Pong!");
     }
 
     // ==========================================
@@ -151,9 +154,9 @@ client.on("messageCreate", async (message) => {
     }
 });
 
-//
+// ==========================================
 // 🎮 КНОПКИ + INTERACTIONS
-//
+// ==========================================
 client.on("interactionCreate", async (interaction) => {
     try {
         await handleButtons(interaction);
@@ -162,7 +165,7 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
-//
+// ==========================================
 // 🔑 LOGIN
-//
+// ==========================================
 client.login(process.env.TOKEN);
