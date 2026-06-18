@@ -1,7 +1,3 @@
-require('dotenv').config();
-console.log('TOKEN из .env:', process.env.TOKEN ? 'ЗАГРУЖЕН ✅' : 'НЕ ЗАГРУЖЕН ❌');
-console.log('Длина токена:', process.env.TOKEN ? process.env.TOKEN.length : 0);
-
 const { Client, GatewayIntentBits } = require("discord.js");
 
 
