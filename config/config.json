@@ -1,4 +1,7 @@
 {
   "requestsChannel": "1162476711498219621",
-  "logsChannel": null
+  "logsChannel": null,
+
+  "countriesChannelId": null,
+  "countriesMessageId": null
 }

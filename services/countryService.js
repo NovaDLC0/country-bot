@@ -1,84 +1,91 @@
+const REGIONS = require("../data/regions");
 const { readDB, saveDB } = require("./dbService");
 
-// 📌 выдать страну
+// =========================
+// ALL COUNTRIES CACHE
+// =========================
+function getAllCountries() {
+    return [...new Set(Object.values(REGIONS).flat())];
+}
+
+// =========================
+// NORMALIZE
+// =========================
+function normalizeCountry(name) {
+    return (name || "").trim();
+}
+
+// =========================
+// VALIDATION
+// =========================
+function isValidCountry(country) {
+    return getAllCountries().includes(country);
+}
+
+// =========================
+// ASSIGN COUNTRY
+// =========================
 function assignCountry(country, user) {
 
     const db = readDB();
 
-    db.users = db.users || {};
     db.countries = db.countries || {};
 
-    // страна занята
-    if (db.countries[country]) {
-        return { error: "Страна уже занята" };
+    country = normalizeCountry(country);
+
+    if (!isValidCountry(country)) {
+        return { error: "❌ Такой страны не существует" };
     }
 
-    // у пользователя уже есть страна
-    if (db.users[user.id]) {
-        return { error: "У тебя уже есть страна" };
+    if (db.countries[country]) {
+        return { error: "❌ Страна уже занята" };
+    }
+
+    // remove old country if exists
+    for (const [c, owner] of Object.entries(db.countries)) {
+        if (owner === user.id) {
+            delete db.countries[c];
+        }
     }
 
     db.countries[country] = user.id;
-    db.users[user.id] = country;
 
     saveDB(db);
 
-    return {
-        success: true,
-        country
-    };
+    return { success: true };
 }
 
-// 📌 снять страну
+// =========================
+// REMOVE COUNTRY
+// =========================
 function removeCountry(userId) {
 
     const db = readDB();
 
-    db.users = db.users || {};
     db.countries = db.countries || {};
 
-    const country = db.users[userId];
+    let found = false;
 
-    if (!country) {
-        return {
-            error: "У игрока нет страны"
-        };
+    for (const [country, owner] of Object.entries(db.countries)) {
+        if (owner === userId) {
+            delete db.countries[country];
+            found = true;
+        }
     }
-
-    delete db.users[userId];
-    delete db.countries[country];
 
     saveDB(db);
 
-    return {
-        success: true,
-        country
-    };
-}
+    if (!found) {
+        return { error: "❌ У пользователя нет страны" };
+    }
 
-// 📌 страна занята?
-function isTaken(country) {
-
-    const db = readDB();
-
-    db.countries = db.countries || {};
-
-    return !!db.countries[country];
-}
-
-// 📌 страна игрока
-function getUserCountry(userId) {
-
-    const db = readDB();
-
-    db.users = db.users || {};
-
-    return db.users[userId] || null;
+    return { success: true };
 }
 
 module.exports = {
     assignCountry,
     removeCountry,
-    isTaken,
-    getUserCountry
+    getAllCountries,
+    isValidCountry,
+    normalizeCountry
 };

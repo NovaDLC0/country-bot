@@ -9,7 +9,7 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
-const REGIONS = require("../data/regions");
+const REGIONS = require('../data/regions');
 const { readDB, saveDB } = require("../services/dbService");
 
 // =========================
@@ -44,7 +44,100 @@ module.exports = async (interaction) => {
 
     try {
 
-        // =====================================================
+if (interaction.isButton() && interaction.customId.startsWith("emb_channel_")) {
+
+    const id = interaction.customId.split("_")[2];
+
+    const menu = new StringSelectMenuBuilder()
+        .setCustomId(`emb_channel_select_${id}`)
+        .setPlaceholder("📺 Выберите канал")
+        .addOptions(
+            interaction.guild.channels.cache
+                .filter(c => c.isTextBased())
+                .map(c => ({
+                    label: `#${c.name}`,
+                    value: c.id
+                }))
+                .slice(0, 25)
+        );
+
+    return interaction.reply({
+        content: "📺 Выберите канал для эмбеда:",
+        components: [new ActionRowBuilder().addComponents(menu)],
+        flags: 64
+    });
+}
+
+if (interaction.isStringSelectMenu() && interaction.customId.startsWith("emb_channel_select_")) {
+
+    const id = interaction.customId.split("_")[3];
+    const channelId = interaction.values[0];
+
+    const db = readDB();
+
+    db.embeds = db.embeds || {};
+    db.embeds[id] = db.embeds[id] || {};
+
+    db.embeds[id].channelId = channelId;
+
+    saveDB(db);
+
+    return interaction.update({
+        content: `✅ Канал сохранён: <#${channelId}>`,
+        components: []
+    });
+}
+
+if (interaction.isButton() && interaction.customId.startsWith("emb_publish_")) {
+
+    const id = interaction.customId.split("_")[2];
+
+    const db = readDB();
+    const embeds = db.embeds || {};
+
+    const data = embeds[id];
+
+    if (!data) {
+        return interaction.reply({
+            content: "❌ Embed не найден",
+            flags: 64
+        });
+    }
+
+    if (!data.channelId) {
+        return interaction.reply({
+            content: "❌ Канал не выбран",
+            flags: 64
+        });
+    }
+
+    const channel = await interaction.client.channels.fetch(data.channelId).catch(() => null);
+
+    if (!channel) {
+        return interaction.reply({
+            content: "❌ Канал не найден или недоступен",
+            flags: 64
+        });
+    }
+
+    const embed = new EmbedBuilder()
+        .setTitle(data.title || "Без заголовка")
+        .setDescription(data.description || "Пусто")
+        .setColor(data.color || "#3498db");
+
+    if (data.footer) embed.setFooter({ text: data.footer });
+    if (data.thumbnail) embed.setThumbnail(data.thumbnail);
+    if (data.image) embed.setImage(data.image);
+
+    await channel.send({ embeds: [embed] });
+
+    return interaction.reply({
+        content: "🚀 Эмбед успешно отправлен!",
+        flags: 64
+    });
+} 
+
+       // =====================================================
         // START FLOW
         // =====================================================
         if (interaction.isButton() && interaction.customId === "start_country_flow") {
@@ -119,7 +212,9 @@ module.exports = async (interaction) => {
         // =====================================================
         // COUNTRY → MODAL
         // =====================================================
-        if (interaction.isStringSelectMenu() && interaction.customId === "country_select") {
+        const { canAssignCountry } = require("../services/countryValidator");
+
+	if (interaction.isStringSelectMenu() && interaction.customId === "country_select") {
 
             const db = readDB();
             const country = interaction.values[0];

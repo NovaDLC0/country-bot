@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-const DB_PATH = "./data/db.json";
+const DB_PATH = "../data/db.json";
 
 function loadDB() {
     try {

@@ -11,9 +11,7 @@
       "reason": "У вас уже есть страна"
     }
   },
-  "countries": {
-    "СССР": "890886720114008064"
-  },
+  "countries": {},
   "settings": {},
   "cooldowns": {}
 }
