@@ -3,12 +3,11 @@
     "1195596012849483808": {
       "userId": "1195596012849483808",
       "tag": "gort1s",
-      "country": "Эстония",
+      "country": "Ирак",
       "rules": ".",
-      "vpi": "..",
-      "age": "M",
-      "status": "rejected",
-      "reason": "У вас уже есть страна"
+      "vpi": ".",
+      "age": ".",
+      "status": "approved"
     }
   },
   "countries": {},

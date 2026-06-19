@@ -11,15 +11,15 @@ const { buildCountriesPanel } = require("./panels/countriesPanel");
 const handleButtons = require("./handlers/buttonsHandler");
 const embedsHandler = require("./handlers/embedsHandler");
 
-const { assignCountry, removeCountry } = require('./services/countryService');
+const { assignCountry, removeCountry } = require("./services/countryService");
 const { readDB } = require("./services/dbService");
 
-const countriesDashboardV2 = require("./handlers/countriesDashboardV2");// =========================
+const countriesDashboardV2 = require("./handlers/countriesDashboardV2");
 const { startLiveDashboardV2 } = require("./handlers/liveDashboardV2");
 
 // VERSION
 // =========================
-const BOT_VERSION = "0.1.7";
+const BOT_VERSION = "0.1.7-fix [BETA]";
 
 // =========================
 // CLIENT
@@ -39,7 +39,7 @@ const client = new Client({
 // =========================
 client.once("ready", () => {
 
-    client.user.setActivity(`🌍 WORLD WIDE v${BOT_VERSION}`, { type: "Watching" });
+    client.user.setActivity(`🌍 WORLD WIDE}`, { type: "Watching" });
 
     client.user.setPresence({
         status: "online",
@@ -65,23 +65,14 @@ client.on("messageCreate", async (message) => {
 
     if (message.author.bot) return;
 
-    // =========================
-    // EMBEDS (IMPORTANT)
-    // =========================
     embedsHandler(message);
 
     const db = readDB();
 
-    // =========================
-    // PANEL
-    // =========================
     if (message.content === "!panel") {
         return message.channel.send(buildCountriesPanel());
     }
 
-    // =========================
-    // COUNTRIES LIST (SAFE)
-    // =========================
     if (message.content === "!countries") {
 
         const allCountries = Object.values(require("./data/regions")).flat();
@@ -106,25 +97,21 @@ client.on("messageCreate", async (message) => {
         const embed = new EmbedBuilder()
             .setTitle(`🌍 Страны (${occupied}/${unique.length})`)
             .setColor(0x3498db)
-            .setDescription(lines.join("\n").slice(0, 4000))
-            .setFooter({ text: "LIVE STATUS SYSTEM" });
+            .setDescription(lines.join("\n").slice(0, 4000));
 
         return message.channel.send({ embeds: [embed] });
     }
 
-if (message.content === "!live") {
-    if (!message.member.permissions.has("Administrator")) {
-        return message.reply("❌ Нет прав");
+    if (message.content === "!live") {
+        if (!message.member.permissions.has("Administrator")) {
+            return message.reply("❌ Нет прав");
+        }
+
+        await startLiveDashboardV2(message.channel);
+
+        return message.reply("🌍 Есть контакт! Веду прямой эфир стран...");
     }
 
-    await startLiveDashboardV2(message.channel);
-
-    return message.reply("🌍 LIVE DASHBOARD V2 запущен");
-}
-
-    // =========================
-    // ADMIN PANEL
-    // =========================
     if (message.content === "!admin") {
 
         if (!message.member.permissions.has("Administrator")) {
@@ -144,18 +131,14 @@ if (message.content === "!live") {
         });
     }
 
-if (message.content === "!dashboard") {
+    if (message.content === "!dashboard") {
+        const { buildDashboardV2 } = require("./handlers/countriesDashboardV2");
 
-    const { buildDashboardV2 } = require("./handlers/countriesDashboardV2");
+        return message.channel.send({
+            embeds: [buildDashboardV2()]
+        });
+    }
 
-    return message.channel.send({
-        embeds: [buildDashboardV2()]
-    });
-}
-
-    // =========================
-    // PING
-    // =========================
     if (message.content === "!ping") {
 
         const sent = await message.reply("🏓 Проверяю пинг...");
@@ -167,14 +150,7 @@ if (message.content === "!dashboard") {
         );
     }
 
-    // =========================
-    // SET COUNTRY (FIXED SERVICE)
-    // =========================
     if (message.content.startsWith("!setcountry")) {
-
-        if (!message.member.permissions.has("Administrator")) {
-            return message.reply("❌ Нет прав");
-        }
 
         const user = message.mentions.users.first();
         const country = message.content.split(" ").slice(2).join(" ");
@@ -195,14 +171,7 @@ if (message.content === "!dashboard") {
         return message.reply(`🌍 ${country} → ${user.tag}`);
     }
 
-    // =========================
-    // REMOVE COUNTRY (FIXED SERVICE)
-    // =========================
     if (message.content.startsWith("!removecountry")) {
-
-        if (!message.member.permissions.has("Administrator")) {
-            return message.reply("❌ Нет прав");
-        }
 
         const user = message.mentions.users.first();
         if (!user) return message.reply("❌ !removecountry @user");
@@ -215,19 +184,20 @@ if (message.content === "!dashboard") {
 
         return message.reply(`❌ Страна снята у ${user.tag}`);
     }
-
 });
 
+
 // =========================
-// INTERACTIONS (IMPORTANT)
+// INTERACTIONS
 // =========================
 client.on("interactionCreate", async (interaction) => {
+
     try {
         await handleButtons(interaction);
-        await embedsHandler.interaction(interaction);
     } catch (err) {
         console.log("BUTTON ERROR:", err);
     }
+
 });
 
 // =========================
